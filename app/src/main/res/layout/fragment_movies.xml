@@ -2,9 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MoviesFragment">
+    tools:context=".ui.MoviesFragment">
 
-    <!-- TODO: Update blank fragment layout -->
     <GridView
         android:id="@+id/movies_grid"
         android:layout_width="match_parent"

@@ -1,4 +1,4 @@
-package com.wolfgoes.popularmovies;
+package com.wolfgoes.popularmovies.ui;
 
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -12,6 +12,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.wolfgoes.popularmovies.BuildConfig;
+import com.wolfgoes.popularmovies.R;
+import com.wolfgoes.popularmovies.data.Movie;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -67,29 +75,30 @@ public class MoviesFragment extends Fragment {
         moviesTask.execute();
     }
 
-    private class FetchMovieList extends AsyncTask<Void, Void, Void> {
+    private class FetchMovieList extends AsyncTask<Void, Void, Movie[]> {
 
         private final String LOG_TAG = FetchMovieList.class.getSimpleName();
 
         @Override
-        protected Void doInBackground(Void... voids) {
+        protected Movie[] doInBackground(Void... voids) {
 
-            HttpURLConnection urlConnection;
-            BufferedReader reader;
+            //TODO: check if retrofit should be used to fetch data
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
 
             String moviesJsonStr;
 
             final String MOVIES_BASE_URL = "http://api.themoviedb.org/3/movie/";
             final String POPULAR_PARAM = "popular";
             final String TOP_RATED_PARAM = "top_rated";
-            final String APPID_PARAM = "api_key";
+            final String API_ID = "api_key";
 
             //TODO: implement SharedPreference to set order condition
             String order = POPULAR_PARAM;
 
             Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
                     .appendPath(order)
-                    .appendQueryParameter(APPID_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
+                    .appendQueryParameter(API_ID, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
 
             Log.d(LOG_TAG, builtUri.toString());
@@ -120,12 +129,53 @@ public class MoviesFragment extends Fragment {
                 }
                 moviesJsonStr = buffer.toString();
 
-                Log.d(LOG_TAG, moviesJsonStr);
+                getMovieDataFromJson(moviesJsonStr);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, "Failed to parse Data: ", e);
+            } finally{
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
             }
 
             return null;
+        }
+
+        private Movie[] getMovieDataFromJson(String moviesJsonStr) throws JSONException {
+            final String JKEY_RESULTS = "results";
+            final String JKEY_TITLE = "original_title";
+            final String JKEY_DATE = "release_date";
+            final String JKEY_POSTER = "poster_path";
+            final String JKEY_OVERVIEW = "overview";
+            final String JKEY_VOTE = "vote_average";
+
+            JSONObject moviesJson = new JSONObject(moviesJsonStr);
+            JSONArray moviesArray = moviesJson.getJSONArray(JKEY_RESULTS);
+
+            int numMovies = moviesArray.length();
+            Movie[] movies = new Movie[numMovies];
+
+            for (int i = 0; i < moviesArray.length(); i++) {
+                JSONObject movie = moviesArray.getJSONObject(i);
+                movies[i] = new Movie();
+
+                movies[i].setTitle(movie.getString(JKEY_TITLE));
+                movies[i].setOverview(movie.getString(JKEY_OVERVIEW));
+                movies[i].setPosterPath(movie.getString(JKEY_POSTER));
+                movies[i].setReleaseDate(movie.getString(JKEY_DATE));
+                movies[i].setVoteAverage(movie.getDouble(JKEY_VOTE));
+            }
+
+            return movies;
         }
     }
 }
