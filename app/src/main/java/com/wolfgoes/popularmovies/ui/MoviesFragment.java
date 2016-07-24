@@ -1,5 +1,6 @@
 package com.wolfgoes.popularmovies.ui;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,10 +13,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.Movie;
+import com.wolfgoes.popularmovies.utils.Utility;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,11 +33,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Random;
 
 /**
  * Fragment {@link MoviesFragment} shows all movies organized in a grid.
  */
 public class MoviesFragment extends Fragment {
+
+    private final String LOG_TAG = MoviesFragment.class.getSimpleName();
+
+    ArrayAdapter<Movie> mMovieAdapter;
 
     @Override
     //http://stackoverflow.com/questions/14076296/nullable-annotation-usage
@@ -66,8 +77,15 @@ public class MoviesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
+
+        mMovieAdapter = new ImageAdapter(getContext());
+        mMovieAdapter.setNotifyOnChange(false);
+
+        GridView gridView = (GridView) rootView.findViewById(R.id.movies_grid);
+        gridView.setAdapter(mMovieAdapter);
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_movies, container, false);
+        return rootView;
     }
 
     private void fetchMovieList() {
@@ -75,9 +93,48 @@ public class MoviesFragment extends Fragment {
         moviesTask.execute();
     }
 
+    private class ImageAdapter extends ArrayAdapter<Movie> {
+        private Context context;
+        private LayoutInflater inflater;
+
+        public ImageAdapter(Context context) {
+            super(context, R.layout.movie_item, R.id.movies_grid);
+
+            this.context = context;
+            inflater = LayoutInflater.from(this.context);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = inflater.inflate(R.layout.movie_item, parent, false);
+            }
+
+            Glide.with(context)
+                    .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
+                    .into((ImageView) convertView);
+
+            return convertView;
+        }
+    }
+
     private class FetchMovieList extends AsyncTask<Void, Void, Movie[]> {
 
         private final String LOG_TAG = FetchMovieList.class.getSimpleName();
+
+        @Override
+        protected void onPostExecute(Movie[] movies) {
+            if (movies == null)
+                Log.d(LOG_TAG, "Error: no movies were fetched");
+            else {
+                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "Number of movies fetched: " + movies.length);
+                mMovieAdapter.clear();
+                for (Movie movie : movies) {
+                    mMovieAdapter.add(movie);
+                }
+                mMovieAdapter.notifyDataSetChanged();
+            }
+        }
 
         @Override
         protected Movie[] doInBackground(Void... voids) {
@@ -88,6 +145,8 @@ public class MoviesFragment extends Fragment {
 
             String moviesJsonStr;
 
+            Movie[] movies = null;
+
             final String MOVIES_BASE_URL = "http://api.themoviedb.org/3/movie/";
             final String POPULAR_PARAM = "popular";
             final String TOP_RATED_PARAM = "top_rated";
@@ -95,13 +154,16 @@ public class MoviesFragment extends Fragment {
 
             //TODO: implement SharedPreference to set order condition
             String order = POPULAR_PARAM;
+            if (BuildConfig.DEBUG) {
+                order = new Random().nextBoolean() ? POPULAR_PARAM : TOP_RATED_PARAM;
+            }
 
             Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
                     .appendPath(order)
                     .appendQueryParameter(API_ID, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
 
-            Log.d(LOG_TAG, builtUri.toString());
+            if (BuildConfig.DEBUG) Log.d(LOG_TAG, builtUri.toString());
 
             try {
                 URL url = new URL(builtUri.toString()); //might cause MalformedURLException
@@ -129,7 +191,7 @@ public class MoviesFragment extends Fragment {
                 }
                 moviesJsonStr = buffer.toString();
 
-                getMovieDataFromJson(moviesJsonStr);
+                movies = getMovieDataFromJson(moviesJsonStr);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
             } catch (JSONException e) {
@@ -147,7 +209,7 @@ public class MoviesFragment extends Fragment {
                 }
             }
 
-            return null;
+            return movies;
         }
 
         private Movie[] getMovieDataFromJson(String moviesJsonStr) throws JSONException {
