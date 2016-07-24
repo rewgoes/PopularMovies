@@ -13,9 +13,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.wolfgoes.popularmovies.BuildConfig;
@@ -77,6 +79,7 @@ public class MoviesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
         mMovieAdapter = new ImageAdapter(getContext());
@@ -84,7 +87,15 @@ public class MoviesFragment extends Fragment {
 
         GridView gridView = (GridView) rootView.findViewById(R.id.movies_grid);
         gridView.setAdapter(mMovieAdapter);
-        // Inflate the layout for this fragment
+
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                String movieTitle = mMovieAdapter.getItem(position).getTitle();
+                Toast.makeText(getContext(),movieTitle,Toast.LENGTH_LONG).show();
+            }
+        });
+
         return rootView;
     }
 
@@ -94,14 +105,14 @@ public class MoviesFragment extends Fragment {
     }
 
     private class ImageAdapter extends ArrayAdapter<Movie> {
-        private Context context;
+        private Context mContext;
         private LayoutInflater inflater;
 
         public ImageAdapter(Context context) {
             super(context, R.layout.movie_item, R.id.movies_grid);
 
-            this.context = context;
-            inflater = LayoutInflater.from(this.context);
+            mContext = context;
+            inflater = LayoutInflater.from(mContext);
         }
 
         @Override
@@ -110,7 +121,7 @@ public class MoviesFragment extends Fragment {
                 convertView = inflater.inflate(R.layout.movie_item, parent, false);
             }
 
-            Glide.with(context)
+            Glide.with(mContext)
                     .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
                     .into((ImageView) convertView);
 
@@ -214,7 +225,9 @@ public class MoviesFragment extends Fragment {
 
         private Movie[] getMovieDataFromJson(String moviesJsonStr) throws JSONException {
             final String JKEY_RESULTS = "results";
-            final String JKEY_TITLE = "original_title";
+            // TODO: check if original_title or title should be fetched
+            // original_title shows Japanese characters
+            final String JKEY_TITLE = "title";
             final String JKEY_DATE = "release_date";
             final String JKEY_POSTER = "poster_path";
             final String JKEY_OVERVIEW = "overview";
