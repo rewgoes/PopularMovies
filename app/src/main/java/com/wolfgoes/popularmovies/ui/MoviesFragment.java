@@ -1,9 +1,12 @@
 package com.wolfgoes.popularmovies.ui;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -45,6 +48,7 @@ public class MoviesFragment extends Fragment {
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
 
     ArrayAdapter<Movie> mMovieAdapter;
+    String mOrder;
 
     @Override
     //http://stackoverflow.com/questions/14076296/nullable-annotation-usage
@@ -70,6 +74,9 @@ public class MoviesFragment extends Fragment {
 
         if (id == R.id.menu_action_refresh) {
             fetchMovieList();
+            return true;
+        } if (id == R.id.action_settings) {
+            startActivity(new Intent(getContext(), SettingsActivity.class));
             return true;
         }
 
@@ -100,6 +107,9 @@ public class MoviesFragment extends Fragment {
     }
 
     private void fetchMovieList() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        mOrder = prefs.getString(getString(R.string.pref_order_key), getString(R.string.pref_order_popular));
+
         FetchMovieList moviesTask = new FetchMovieList();
         moviesTask.execute();
     }
@@ -159,18 +169,10 @@ public class MoviesFragment extends Fragment {
             Movie[] movies = null;
 
             final String MOVIES_BASE_URL = "http://api.themoviedb.org/3/movie/";
-            final String POPULAR_PARAM = "popular";
-            final String TOP_RATED_PARAM = "top_rated";
             final String API_ID = "api_key";
 
-            //TODO: implement SharedPreference to set order condition
-            String order = POPULAR_PARAM;
-            if (BuildConfig.DEBUG) {
-                order = new Random().nextBoolean() ? POPULAR_PARAM : TOP_RATED_PARAM;
-            }
-
             Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
-                    .appendPath(order)
+                    .appendPath(mOrder)
                     .appendQueryParameter(API_ID, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
 
