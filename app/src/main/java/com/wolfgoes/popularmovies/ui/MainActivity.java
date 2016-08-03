@@ -7,8 +7,6 @@ import com.wolfgoes.popularmovies.R;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final String LOG_TAG = MainActivity.class.getSimpleName();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //reference: https://developer.android.com/training/basics/fragments/fragment-ui.html
