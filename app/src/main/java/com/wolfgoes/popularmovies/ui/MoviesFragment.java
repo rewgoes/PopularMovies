@@ -99,6 +99,9 @@ public class MoviesFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 String movieTitle = mMovieAdapter.getItem(position).getTitle();
                 Toast.makeText(getContext(),movieTitle,Toast.LENGTH_LONG).show();
+
+                Intent intent = new Intent(getContext(), DetailAcitivy.class);
+                startActivity(intent);
             }
         });
 
