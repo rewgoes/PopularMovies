@@ -100,7 +100,8 @@ public class MoviesFragment extends Fragment {
                 String movieTitle = mMovieAdapter.getItem(position).getTitle();
                 Toast.makeText(getContext(),movieTitle,Toast.LENGTH_LONG).show();
 
-                Intent intent = new Intent(getContext(), DetailAcitivy.class);
+                Intent intent = new Intent(getContext(), DetailActivity.class)
+                        .putExtra("movie", mMovieAdapter.getItem(position));
                 startActivity(intent);
             }
         });

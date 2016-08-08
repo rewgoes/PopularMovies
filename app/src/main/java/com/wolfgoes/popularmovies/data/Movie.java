@@ -1,63 +1,100 @@
 package com.wolfgoes.popularmovies.data;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by rafael on 23/07/2016.
  */
 
 //TODO: check if Parcelable should be used
 //TODO: check if GSON should be used @Expose @SerializedName
-public class Movie {
+public class Movie implements Parcelable{
 
-    private String title;
+    private String mTitle;
     //TODO: change it to date
-    private String releaseDate;
-    private String posterPath;
-    private double voteAverage;
-    private String overview;
+    private String mReleaseDate;
+    private String mPosterPath;
+    private double mVoteAverage;
+    private String mOverview;
+
+    public Movie () { }
 
     @Override
     public String toString() {
-        return title;
+        return mTitle;
     }
 
     public String getTitle() {
-        return title;
+        return mTitle;
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.mTitle = title;
     }
 
     public String getReleaseDate() {
-        return releaseDate;
+        return mReleaseDate;
     }
 
     public void setReleaseDate(String releaseDate) {
-        this.releaseDate = releaseDate;
+        this.mReleaseDate = releaseDate;
     }
 
     public String getPosterPath() {
-        return posterPath;
+        return mPosterPath;
     }
 
     public void setPosterPath(String posterPath) {
-        this.posterPath = posterPath;
+        this.mPosterPath = posterPath;
     }
 
     public double getVoteAverage() {
-        return voteAverage;
+        return mVoteAverage;
     }
 
     public void setVoteAverage(double voteAverage) {
-        this.voteAverage = voteAverage;
+        this.mVoteAverage = voteAverage;
     }
 
     public String getOverview() {
-        return overview;
+        return mOverview;
     }
 
     public void setOverview(String overview) {
-        this.overview = overview;
+        this.mOverview = overview;
     }
 
+    // Parcelling part
+    public Movie(Parcel in){
+        mTitle = in.readString();
+        mReleaseDate = in.readString();
+        mPosterPath = in.readString();
+        mVoteAverage = in.readDouble();
+        mOverview = in.readString();
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mTitle);
+        dest.writeString(mReleaseDate);
+        dest.writeString(mPosterPath);
+        dest.writeDouble(mVoteAverage);
+        dest.writeString(mOverview);
+    }
+
+    public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+        public Movie createFromParcel(Parcel in) {
+            return new Movie(in);
+        }
+
+        public Movie[] newArray(int size) {
+            return new Movie[size];
+        }
+    };
 }
