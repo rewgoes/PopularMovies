@@ -1,18 +1,23 @@
 <resources>
-    <string name="app_name">PopularMovies</string>
+    <string name="app_name">Popular Movies</string>
 
-    <!-- Menu items -->
+    <!-- Refresh action -->
     <string name="menu_action_refresh">Refresh</string>
 
-    <!-- Settings values -->
+    <!-- Share action -->
+    <string name="menu_action_share">Share</string>
+
+    <!-- Settings action -->
     <string name="menu_action_settings">Settings</string>
     <string name="title_activity_settings">Settings</string>
 
     <string name="pref_order_label_top_rated">Top rated</string>
     <string name="pref_order_label_popular">Popular</string>
-    <string name="pref_order_popular">popular</string>
-    <string name="pref_order_top_rated">top_rated</string>
+    <string name="pref_order_popular" translatable="false">popular</string>
+    <string name="pref_order_top_rated" translatable="false">top_rated</string>
     <string name="pref_order_label">Movies order</string>
-    <string name="pref_order_key">order</string>
+    <string name="pref_order_key" translatable="false">order</string>
+
+
 
 </resources>
