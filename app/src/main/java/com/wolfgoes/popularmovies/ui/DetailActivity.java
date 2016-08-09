@@ -13,10 +13,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.Movie;
+import com.wolfgoes.popularmovies.utils.Utility;
+
+import org.w3c.dom.Text;
 
 public class DetailActivity extends AppCompatActivity {
 
@@ -75,15 +80,34 @@ public class DetailActivity extends AppCompatActivity {
 
             View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-            TextView text = (TextView) rootView.findViewById(R.id.texting);
-
             Intent intent = getActivity().getIntent();
             if (intent != null) {
                 if (intent.hasExtra("movie")) {
                     Movie movie = intent.getParcelableExtra("movie");
                     if (movie != null ) {
-                        text.setText(movie.getTitle());
-                        mMovieStr = movie.getTitle();
+                        //Get all values
+                        String title = movie.getTitle();
+                        String releaseDate = movie.getReleaseDate();
+                        String poster = movie.getPosterPath();
+                        double vote = movie.getVoteAverage();
+                        String overview = movie.getOverview();
+
+                        //Get all view
+                        // Title is set as activity title
+                        TextView releaseView = (TextView) rootView.findViewById(R.id.year);
+                        ImageView posterView = (ImageView) rootView.findViewById(R.id.poster);
+                        TextView voteView = (TextView) rootView.findViewById(R.id.year);
+                        TextView overviewView = (TextView) rootView.findViewById(R.id.description);
+
+                        //Set values to the views
+                        getActivity().setTitle(title);
+                        releaseView.setText(releaseDate);
+                        Glide.with(getContext())
+                                .load(Utility.getPosterUrlForMovie(poster))
+                                .into((ImageView) posterView);
+                        voteView.setText(Double.toString(vote));
+                        overviewView.setText(overview);
+
                     }
                 }
             }
