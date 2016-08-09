@@ -9,4 +9,4 @@ After creating an API, please, define a global property called <b>MyTheMovieDBAp
 Another alternative is to edit <b>THE_MOVIE_DB_API_KEY</b> value in PopularMovies\app\build.gradle file.
 
 # Credits
-[Designed by Freepik](http://www.freepik.com/free-vector/cinema-pack_762413.htm)
+[App icon designed by Freepik](http://www.freepik.com/free-vector/cinema-pack_762413.htm)
