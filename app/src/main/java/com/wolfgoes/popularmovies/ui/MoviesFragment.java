@@ -1,5 +1,6 @@
 package com.wolfgoes.popularmovies.ui;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,7 +21,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.wolfgoes.popularmovies.BuildConfig;
@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Locale;
 
 /**
  * Fragment {@link MoviesFragment} shows all movies organized in a grid.
@@ -97,9 +98,6 @@ public class MoviesFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                String movieTitle = mMovieAdapter.getItem(position).getTitle();
-                Toast.makeText(getContext(),movieTitle,Toast.LENGTH_LONG).show();
-
                 Intent intent = new Intent(getContext(), DetailActivity.class)
                         .putExtra("movie", mMovieAdapter.getItem(position));
                 startActivity(intent);
@@ -134,9 +132,11 @@ public class MoviesFragment extends Fragment {
                 convertView = inflater.inflate(R.layout.movie_item, parent, false);
             }
 
+            ImageView poster = (ImageView) convertView.findViewById(R.id.poster);
+
             Glide.with(mContext)
                     .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
-                    .into((ImageView) convertView);
+                    .into(poster);
 
             return convertView;
         }
@@ -145,9 +145,26 @@ public class MoviesFragment extends Fragment {
     private class FetchMovieList extends AsyncTask<Void, Void, Movie[]> {
 
         private final String LOG_TAG = FetchMovieList.class.getSimpleName();
+        private ProgressDialog mDialog;
+
+        public FetchMovieList() {
+            mDialog = new ProgressDialog(getContext());
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            if (mDialog != null) {
+                mDialog.setMessage(getString(R.string.loading_movies));
+                mDialog.show();
+            }
+        }
 
         @Override
         protected void onPostExecute(Movie[] movies) {
+            if (mDialog != null && mDialog.isShowing())
+                mDialog.dismiss();
+
             if (movies == null)
                 Log.d(LOG_TAG, "Error: no movies were fetched");
             else {
@@ -173,10 +190,17 @@ public class MoviesFragment extends Fragment {
 
             final String MOVIES_BASE_URL = "http://api.themoviedb.org/3/movie/";
             final String API_ID = "api_key";
+            final String LANGUAGE = "language";
+            final String POSTER_LANGUAGE = "include_image_language";
+
+            String language = Locale.getDefault().getLanguage();
+            Log.d(LOG_TAG, "Language defined to: " + language);
 
             Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
                     .appendPath(mOrder)
                     .appendQueryParameter(API_ID, BuildConfig.THE_MOVIE_DB_API_KEY)
+                    .appendQueryParameter(LANGUAGE, language)
+                    .appendQueryParameter(POSTER_LANGUAGE, language + ",en")
                     .build();
 
             if (BuildConfig.DEBUG) Log.d(LOG_TAG, builtUri.toString());
@@ -235,7 +259,7 @@ public class MoviesFragment extends Fragment {
             final String JKEY_TITLE = "title";
             final String JKEY_DATE = "release_date";
             final String JKEY_POSTER = "poster_path";
-            final String JKEY_OVERVIEW = "overview";
+            final String JKEY_SYNOPSIS = "overview";
             final String JKEY_VOTE = "vote_average";
 
             JSONObject moviesJson = new JSONObject(moviesJsonStr);
@@ -249,9 +273,9 @@ public class MoviesFragment extends Fragment {
                 movies[i] = new Movie();
 
                 movies[i].setTitle(movie.getString(JKEY_TITLE));
-                movies[i].setOverview(movie.getString(JKEY_OVERVIEW));
+                movies[i].setSynopsis(movie.getString(JKEY_SYNOPSIS));
                 movies[i].setPosterPath(movie.getString(JKEY_POSTER));
-                movies[i].setReleaseDate(movie.getString(JKEY_DATE));
+                movies[i].setReleaseDate(movie.getString(JKEY_DATE).substring(0,4));
                 movies[i].setVoteAverage(movie.getDouble(JKEY_VOTE));
             }
 

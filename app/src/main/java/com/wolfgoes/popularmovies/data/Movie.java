@@ -16,7 +16,7 @@ public class Movie implements Parcelable{
     private String mReleaseDate;
     private String mPosterPath;
     private double mVoteAverage;
-    private String mOverview;
+    private String mSynopsis;
 
     public Movie () { }
 
@@ -57,12 +57,12 @@ public class Movie implements Parcelable{
         this.mVoteAverage = voteAverage;
     }
 
-    public String getOverview() {
-        return mOverview;
+    public String getSynopsis() {
+        return mSynopsis;
     }
 
-    public void setOverview(String overview) {
-        this.mOverview = overview;
+    public void setSynopsis(String overview) {
+        this.mSynopsis = overview;
     }
 
     // Parcelling part
@@ -71,7 +71,7 @@ public class Movie implements Parcelable{
         mReleaseDate = in.readString();
         mPosterPath = in.readString();
         mVoteAverage = in.readDouble();
-        mOverview = in.readString();
+        mSynopsis = in.readString();
     }
 
     @Override
@@ -85,7 +85,7 @@ public class Movie implements Parcelable{
         dest.writeString(mReleaseDate);
         dest.writeString(mPosterPath);
         dest.writeDouble(mVoteAverage);
-        dest.writeString(mOverview);
+        dest.writeString(mSynopsis);
     }
 
     public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {

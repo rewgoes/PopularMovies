@@ -88,23 +88,24 @@ public class DetailActivity extends AppCompatActivity {
                         String releaseDate = movie.getReleaseDate();
                         String poster = movie.getPosterPath();
                         double vote = movie.getVoteAverage();
-                        String overview = movie.getOverview();
+                        String synopsis = movie.getSynopsis();
 
                         //Get all view
                         TextView titleView = (TextView) rootView.findViewById(R.id.title);
                         TextView releaseView = (TextView) rootView.findViewById(R.id.year);
                         ImageView posterView = (ImageView) rootView.findViewById(R.id.poster);
                         TextView voteView = (TextView) rootView.findViewById(R.id.rate);
-                        TextView overviewView = (TextView) rootView.findViewById(R.id.description);
+                        TextView overviewView = (TextView) rootView.findViewById(R.id.synopsis);
 
                         //Set values to the views
+                        mMovieStr = title;
                         titleView.setText(title);
                         releaseView.setText(releaseDate);
                         Glide.with(getContext())
                                 .load(Utility.getPosterUrlForMovie(poster))
-                                .into((ImageView) posterView);
-                        voteView.setText(Double.toString(vote));
-                        overviewView.setText(overview);
+                                .into(posterView);
+                        voteView.setText(Double.toString(vote) + "/10");
+                        overviewView.setText(synopsis);
 
                     }
                 }

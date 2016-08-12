@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name" translatable="false">Popular Movies</string>
+
+    <!-- Refresh action -->
+    <string name="menu_action_refresh">Recarregar</string>
+
+    <!-- Share action -->
+    <string name="menu_action_share">Compartilhar</string>
+
+    <!-- Settings action -->
+    <string name="menu_action_settings">Configurações</string>
+    <string name="title_activity_settings">Configurações</string>
+
+    <string name="pref_order_label_top_rated">Melhor avaliação</string>
+    <string name="pref_order_label_popular">Popularidade</string>
+    <string name="pref_order_popular" translatable="false">popular</string>
+    <string name="pref_order_top_rated" translatable="false">top_rated</string>
+    <string name="pref_order_label">Ordem dos filmes</string>
+    <string name="pref_order_key" translatable="false">order</string>
+    <string name="release_year_not_available">Desculpe, ano de lançamento não disponível.</string>
+    <string name="rating_not_available">Desculpe, avaliação não disponível.</string>
+    <string name="description_not_available">Desculpe, sinopse não disponível.</string>
+    <string name="title_not_available">Desculpe, título não disponível.</string>
+    <string name="title_activity_details">Detalhes</string>
+    <string name="description">Sinopse</string>
+    <string name="title">Título</string>
+    <string name="release_year">Ano de lançamento</string>
+    <string name="rating">Avaliação</string>
+    <string name="loading_movies">Carregando Filmes</string>
+
+</resources>
