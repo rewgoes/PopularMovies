@@ -5,5 +5,8 @@
 
     <!-- "standard" sizes we have for posters are 11x17 in, 18x24 in and 24x36
     Consider: 24x36 proportion -->
-    <dimen name="poster_width">270dp</dimen>
+    <dimen name="poster_width">185dp</dimen>
+    <dimen name="poster_height">277dp</dimen>
+    <dimen name="movie_item_width">195dp</dimen>
+    <dimen name="movie_item_margin">5dp</dimen>
 </resources>

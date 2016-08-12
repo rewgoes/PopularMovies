@@ -8,7 +8,9 @@
         android:id="@+id/movies_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:numColumns="2"
+        android:numColumns="auto_fit"
+        android:gravity="center_horizontal"
+        android:columnWidth="@dimen/movie_item_width"
         /> <!-- check android:stretchMode -->
 
 </FrameLayout>

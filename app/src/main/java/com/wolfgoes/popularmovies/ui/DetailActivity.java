@@ -21,8 +21,6 @@ import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.Movie;
 import com.wolfgoes.popularmovies.utils.Utility;
 
-import org.w3c.dom.Text;
-
 public class DetailActivity extends AppCompatActivity {
 
     @Override
@@ -93,14 +91,14 @@ public class DetailActivity extends AppCompatActivity {
                         String overview = movie.getOverview();
 
                         //Get all view
-                        // Title is set as activity title
+                        TextView titleView = (TextView) rootView.findViewById(R.id.title);
                         TextView releaseView = (TextView) rootView.findViewById(R.id.year);
                         ImageView posterView = (ImageView) rootView.findViewById(R.id.poster);
-                        TextView voteView = (TextView) rootView.findViewById(R.id.year);
+                        TextView voteView = (TextView) rootView.findViewById(R.id.rate);
                         TextView overviewView = (TextView) rootView.findViewById(R.id.description);
 
                         //Set values to the views
-                        getActivity().setTitle(title);
+                        titleView.setText(title);
                         releaseView.setText(releaseDate);
                         Glide.with(getContext())
                                 .load(Utility.getPosterUrlForMovie(poster))

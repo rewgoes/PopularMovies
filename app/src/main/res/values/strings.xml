@@ -17,7 +17,10 @@
     <string name="pref_order_top_rated" translatable="false">top_rated</string>
     <string name="pref_order_label">Movies order</string>
     <string name="pref_order_key" translatable="false">order</string>
-
+    <string name="release_year_not_available">Sorry, release year not available</string>
+    <string name="rating_not_available">Sorry, rating not available.</string>
+    <string name="description_not_available">Sorry, description not available.</string>
+    <string name="title_not_available">Sorry, title not available.</string>
 
 
 </resources>
