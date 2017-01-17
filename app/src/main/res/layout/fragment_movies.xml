@@ -8,10 +8,17 @@
         android:id="@+id/movies_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:numColumns="auto_fit"
-        android:gravity="center_horizontal"
         android:columnWidth="@dimen/movie_item_width"
+        android:gravity="center_horizontal"
         android:minHeight="@dimen/movie_item_height"
-        /> <!-- check android:stretchMode -->
+        android:numColumns="auto_fit" /> <!-- check android:stretchMode -->
+
+    <TextView
+        android:id="@+id/empty_list_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/empty_list_view"
+        android:visibility="gone" />
 
 </FrameLayout>

@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.Movie;
 import com.wolfgoes.popularmovies.utils.Utility;
@@ -103,6 +104,7 @@ public class DetailActivity extends AppCompatActivity {
                         releaseView.setText(releaseDate);
                         Glide.with(getContext())
                                 .load(Utility.getPosterUrlForMovie(poster))
+                                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                                 .into(posterView);
                         voteView.setText(Double.toString(vote) + "/10");
                         overviewView.setText(synopsis);

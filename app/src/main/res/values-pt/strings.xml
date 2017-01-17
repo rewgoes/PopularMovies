@@ -27,5 +27,6 @@
     <string name="release_year">Ano de lançamento</string>
     <string name="rating">Avaliação</string>
     <string name="loading_movies">Carregando Filmes</string>
+    <string name="empty_list_view">Houve um problema ao carregar os filmes</string>
 
 </resources>

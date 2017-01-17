@@ -27,5 +27,6 @@
     <string name="release_year">Release Year</string>
     <string name="rating">Rating</string>
     <string name="loading_movies">Loading movies</string>
+    <string name="empty_list_view">A problem happened while loading the movies</string>
 
 </resources>

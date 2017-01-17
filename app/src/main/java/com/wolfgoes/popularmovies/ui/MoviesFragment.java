@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,6 +24,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.Movie;
@@ -73,7 +75,7 @@ public class MoviesFragment extends Fragment {
         int id = item.getItemId();
 
         if (id == R.id.menu_action_refresh) {
-            fetchMovieList();
+            fetchMovieList(true);
             return true;
         } if (id == R.id.action_settings) {
             startActivity(new Intent(getContext(), SettingsActivity.class));
@@ -94,6 +96,7 @@ public class MoviesFragment extends Fragment {
 
         GridView gridView = (GridView) rootView.findViewById(R.id.movies_grid);
         gridView.setAdapter(mMovieAdapter);
+        gridView.setEmptyView(rootView.findViewById(R.id.empty_list_view));
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -108,11 +111,18 @@ public class MoviesFragment extends Fragment {
     }
 
     private void fetchMovieList() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        mOrder = prefs.getString(getString(R.string.pref_order_key), getString(R.string.pref_order_popular));
+        fetchMovieList(false);
+    }
 
-        FetchMovieList moviesTask = new FetchMovieList();
-        moviesTask.execute();
+    private void fetchMovieList(boolean forceUpdate) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String order = prefs.getString(getString(R.string.pref_order_key), getString(R.string.pref_order_popular));
+
+        if (TextUtils.isEmpty(mOrder) || !mOrder.equals(order) || forceUpdate) {
+            mOrder = order;
+            FetchMovieList moviesTask = new FetchMovieList();
+            moviesTask.execute();
+        }
     }
 
     private class ImageAdapter extends ArrayAdapter<Movie> {
@@ -136,6 +146,7 @@ public class MoviesFragment extends Fragment {
 
             Glide.with(mContext)
                     .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .into(poster);
 
             return convertView;
