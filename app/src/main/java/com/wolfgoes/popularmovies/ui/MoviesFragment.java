@@ -24,7 +24,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.DecodeFormat;
 import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.Movie;
@@ -77,7 +77,8 @@ public class MoviesFragment extends Fragment {
         if (id == R.id.menu_action_refresh) {
             fetchMovieList(true);
             return true;
-        } if (id == R.id.action_settings) {
+        }
+        if (id == R.id.action_settings) {
             startActivity(new Intent(getContext(), SettingsActivity.class));
             return true;
         }
@@ -146,7 +147,6 @@ public class MoviesFragment extends Fragment {
 
             Glide.with(mContext)
                     .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .into(poster);
 
             return convertView;
@@ -247,7 +247,7 @@ public class MoviesFragment extends Fragment {
                 Log.e(LOG_TAG, "Error ", e);
             } catch (JSONException e) {
                 Log.e(LOG_TAG, "Failed to parse Data: ", e);
-            } finally{
+            } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
@@ -286,7 +286,7 @@ public class MoviesFragment extends Fragment {
                 movies[i].setTitle(movie.getString(JKEY_TITLE));
                 movies[i].setSynopsis(movie.getString(JKEY_SYNOPSIS));
                 movies[i].setPosterPath(movie.getString(JKEY_POSTER));
-                movies[i].setReleaseDate(movie.getString(JKEY_DATE).substring(0,4));
+                movies[i].setReleaseDate(movie.getString(JKEY_DATE).substring(0, 4));
                 movies[i].setVoteAverage(movie.getDouble(JKEY_VOTE));
             }
 

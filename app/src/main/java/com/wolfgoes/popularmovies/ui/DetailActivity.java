@@ -83,7 +83,7 @@ public class DetailActivity extends AppCompatActivity {
             if (intent != null) {
                 if (intent.hasExtra("movie")) {
                     Movie movie = intent.getParcelableExtra("movie");
-                    if (movie != null ) {
+                    if (movie != null) {
                         //Get all values
                         String title = movie.getTitle();
                         String releaseDate = movie.getReleaseDate();
@@ -104,7 +104,6 @@ public class DetailActivity extends AppCompatActivity {
                         releaseView.setText(releaseDate);
                         Glide.with(getContext())
                                 .load(Utility.getPosterUrlForMovie(poster))
-                                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                                 .into(posterView);
                         voteView.setText(Double.toString(vote) + "/10");
                         overviewView.setText(synopsis);
@@ -130,7 +129,7 @@ public class DetailActivity extends AppCompatActivity {
 
             // Attach an intent to this ShareActionProvider.  You can update this at any time,
             // like when the user selects a new piece of data they might like to share.
-            if (mShareActionProvider != null ) {
+            if (mShareActionProvider != null) {
                 mShareActionProvider.setShareIntent(createShareForecastIntent());
             } else {
                 Log.d(LOG_TAG, "Share Action Provider is null?");
