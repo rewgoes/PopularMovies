@@ -1,10 +1,10 @@
 package com.wolfgoes.popularmovies.ui;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -104,6 +104,7 @@ public class DetailActivity extends AppCompatActivity {
                         releaseView.setText(releaseDate);
                         Glide.with(getContext())
                                 .load(Utility.getPosterUrlForMovie(poster))
+                                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                                 .into(posterView);
                         voteView.setText(Double.toString(vote) + "/10");
                         overviewView.setText(synopsis);

@@ -24,7 +24,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DecodeFormat;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.Movie;
@@ -147,6 +147,7 @@ public class MoviesFragment extends Fragment {
 
             Glide.with(mContext)
                     .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .into(poster);
 
             return convertView;
