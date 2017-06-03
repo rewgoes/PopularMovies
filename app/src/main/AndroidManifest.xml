@@ -37,6 +37,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.MainActivity"/>
         </activity>
+
+        <provider
+            android:name="com.wolfgoes.popularmovies.data.MoviesContentProvider"
+            android:authorities="com.wolfgoes.popularmovies"
+            android:exported="false"/>
     </application>
 
 
