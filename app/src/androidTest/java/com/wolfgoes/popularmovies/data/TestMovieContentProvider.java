@@ -14,8 +14,6 @@ import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.wolfgoes.popularmovies.model.Movie;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,15 +47,14 @@ public class TestMovieContentProvider {
 
             ProviderInfo providerInfo = pm.getProviderInfo(componentName, 0);
             String actualAuthority = providerInfo.authority;
-            String expectedAuthority = packageName;
 
             /* Make sure that the registered authority matches the authority from the Contract */
             String incorrectAuthority =
                     "Error: MoviesContentProvider registered with authority: " + actualAuthority +
-                            " instead of expected authority: " + expectedAuthority;
+                            " instead of expected authority: " + packageName;
             assertEquals(incorrectAuthority,
                     actualAuthority,
-                    expectedAuthority);
+                    packageName);
 
         } catch (PackageManager.NameNotFoundException e) {
             String providerNotRegisteredAtAll =
@@ -304,7 +301,7 @@ public class TestMovieContentProvider {
         String deleteFailed = "Unable to delete item in the database";
         assertTrue(deleteFailed, movieUpdate != 0);
 
-        String[] projection = new String[] {
+        String[] projection = new String[]{
                 MoviesContract.MovieEntry.COLUMN_TITLE
         };
 
@@ -328,6 +325,8 @@ public class TestMovieContentProvider {
         String messageUpdate = "Title after update is not the same";
 
         assertEquals(messageUpdate, titleUpdate, titleAfterUpdate);
+
+        movieCursor.close();
 
         /*
          * If this fails, it's likely you didn't call notifyChange in your delete method from
