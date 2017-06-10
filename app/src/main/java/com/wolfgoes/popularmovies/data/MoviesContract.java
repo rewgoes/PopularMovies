@@ -25,11 +25,13 @@ public class MoviesContract {
 
         public static final String COLUMN_RATING = "rating";
 
+        public static final String COLUMN_POPULARITY = "popularity";
+
         public static final String COLUMN_SYNOPSIS = "synopsis";
 
         public static final String COLUMN_POSTER_URL = "poster_url";
 
-        public static final String COLUMNS_FAVORITE = "favorite";
+        public static final String COLUMN_FAVORITE = "favorite";
 
     }
 }
