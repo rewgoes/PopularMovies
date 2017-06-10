@@ -102,7 +102,6 @@ public class TestMovieContentProvider {
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RATING, 0.0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, "Test synopsis");
-        testMovieValues.put(MoviesContract.MovieEntry.COLUMN_FAVORITE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_POPULARITY, 0.0);
 
         /* TestContentObserver allows us to test if notifyChange was called appropriately */
@@ -150,7 +149,6 @@ public class TestMovieContentProvider {
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RATING, 0.0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, "Test synopsis");
-        testMovieValues.put(MoviesContract.MovieEntry.COLUMN_FAVORITE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_POPULARITY, 0.0);
 
         /* Insert ContentValues into database and get a row ID back */
@@ -193,7 +191,6 @@ public class TestMovieContentProvider {
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RATING, 0.0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, "Test synopsis");
-        testMovieValues.put(MoviesContract.MovieEntry.COLUMN_FAVORITE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_POPULARITY, 0.0);
 
         /* Insert ContentValues into database and get a row ID back */
@@ -256,7 +253,6 @@ public class TestMovieContentProvider {
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RATING, 0.0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, "Test synopsis");
-        testMovieValues.put(MoviesContract.MovieEntry.COLUMN_FAVORITE, 0);
         testMovieValues.put(MoviesContract.MovieEntry.COLUMN_POPULARITY, 0.0);
 
         /* Insert ContentValues into database and get a row ID back */
@@ -302,7 +298,8 @@ public class TestMovieContentProvider {
         assertTrue(deleteFailed, movieUpdate != 0);
 
         String[] projection = new String[]{
-                MoviesContract.MovieEntry.COLUMN_TITLE
+                MoviesContract.MovieEntry.COLUMN_TITLE,
+                MoviesContract.MovieEntry.COLUMN_FAVORITE
         };
 
         Cursor movieCursor = mContext.getContentResolver().query(
@@ -343,7 +340,9 @@ public class TestMovieContentProvider {
 
     @After
     public void tearDown() {
-        database.close();
+        if (database != null) {
+            database.close();
+        }
     }
 
 }
