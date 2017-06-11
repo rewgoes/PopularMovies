@@ -7,19 +7,27 @@ import android.os.Parcelable;
 //TODO: check if GSON should be used @Expose @SerializedName
 public class Movie implements Parcelable{
 
+    private long id;
     private String mTitle;
     //TODO: change it to date
     private String mReleaseDate;
     private String mPosterPath;
     private double mVoteAverage;
     private String mSynopsis;
-    private boolean mIsFavorite;
 
     public Movie () { }
 
     @Override
     public String toString() {
         return mTitle;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -62,14 +70,6 @@ public class Movie implements Parcelable{
         this.mSynopsis = overview;
     }
 
-    public boolean isFavorite() {
-        return mIsFavorite;
-    }
-
-    public void setFavorite(boolean favorite) {
-        mIsFavorite = favorite;
-    }
-
     // Parcelling part
     public Movie(Parcel in){
         mTitle = in.readString();
@@ -77,7 +77,6 @@ public class Movie implements Parcelable{
         mPosterPath = in.readString();
         mVoteAverage = in.readDouble();
         mSynopsis = in.readString();
-        mIsFavorite = in.readByte() != 0;
     }
 
     @Override
@@ -92,7 +91,6 @@ public class Movie implements Parcelable{
         dest.writeString(mPosterPath);
         dest.writeDouble(mVoteAverage);
         dest.writeString(mSynopsis);
-        dest.writeByte((byte) (mIsFavorite ? 1 : 0));
     }
 
     public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {

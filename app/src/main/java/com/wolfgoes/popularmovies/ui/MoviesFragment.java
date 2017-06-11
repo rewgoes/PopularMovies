@@ -268,6 +268,7 @@ public class MoviesFragment extends Fragment {
             final String JKEY_RESULTS = "results";
             // TODO: check if original_title or title should be fetched
             // original_title shows Japanese characters
+            final String JKEY_ID = "id";
             final String JKEY_TITLE = "title";
             final String JKEY_DATE = "release_date";
             final String JKEY_POSTER = "poster_path";
@@ -284,6 +285,7 @@ public class MoviesFragment extends Fragment {
                 JSONObject movie = moviesArray.getJSONObject(i);
                 movies[i] = new Movie();
 
+                movies[i].setId(movie.getLong(JKEY_ID));
                 movies[i].setTitle(movie.getString(JKEY_TITLE));
                 movies[i].setSynopsis(movie.getString(JKEY_SYNOPSIS));
                 movies[i].setPosterPath(movie.getString(JKEY_POSTER));
