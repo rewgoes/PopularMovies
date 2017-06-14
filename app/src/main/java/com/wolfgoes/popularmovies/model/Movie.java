@@ -7,7 +7,7 @@ import android.os.Parcelable;
 //TODO: check if GSON should be used @Expose @SerializedName
 public class Movie implements Parcelable{
 
-    private long id;
+    private long mId;
     private String mTitle;
     //TODO: change it to date
     private String mReleaseDate;
@@ -23,11 +23,11 @@ public class Movie implements Parcelable{
     }
 
     public long getId() {
-        return id;
+        return mId;
     }
 
     public void setId(long id) {
-        this.id = id;
+        this.mId = id;
     }
 
     public String getTitle() {
@@ -72,6 +72,7 @@ public class Movie implements Parcelable{
 
     // Parcelling part
     public Movie(Parcel in){
+        mId = in.readLong();
         mTitle = in.readString();
         mReleaseDate = in.readString();
         mPosterPath = in.readString();
@@ -86,6 +87,7 @@ public class Movie implements Parcelable{
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(mId);
         dest.writeString(mTitle);
         dest.writeString(mReleaseDate);
         dest.writeString(mPosterPath);
