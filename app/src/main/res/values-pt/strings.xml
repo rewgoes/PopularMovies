@@ -13,10 +13,8 @@
 
     <string name="pref_order_label_top_rated">Melhor avaliação</string>
     <string name="pref_order_label_popular">Popularidade</string>
-    <string name="pref_order_popular" translatable="false">popular</string>
-    <string name="pref_order_top_rated" translatable="false">top_rated</string>
+    <string name="pref_order_label_favorites">Favoritos</string>
     <string name="pref_order_label">Ordem dos filmes</string>
-    <string name="pref_order_key" translatable="false">order</string>
     <string name="release_year_not_available">Desculpe, ano de lançamento não disponível.</string>
     <string name="rating_not_available">Desculpe, avaliação não disponível.</string>
     <string name="description_not_available">Desculpe, sinopse não disponível.</string>

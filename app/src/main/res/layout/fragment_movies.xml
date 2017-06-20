@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     tools:context=".ui.MoviesFragment">
 
+    <!-- TODO: change it to RecyclerView -->
     <GridView
         android:id="@+id/movies_grid"
         android:layout_width="match_parent"

@@ -4,12 +4,16 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,6 +31,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
+import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.utils.Utility;
 
@@ -45,9 +50,11 @@ import java.util.Locale;
 /**
  * Fragment {@link MoviesFragment} shows all movies organized in a grid.
  */
-public class MoviesFragment extends Fragment {
+public class MoviesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
+
+    private final int MOVIE_LOADER_ID = 1;
 
     ArrayAdapter<Movie> mMovieAdapter;
     String mOrder;
@@ -119,11 +126,62 @@ public class MoviesFragment extends Fragment {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         String order = prefs.getString(getString(R.string.pref_order_key), getString(R.string.pref_order_popular));
 
-        if (TextUtils.isEmpty(mOrder) || !mOrder.equals(order) || forceUpdate) {
-            mOrder = order;
-            FetchMovieList moviesTask = new FetchMovieList();
-            moviesTask.execute();
+        if (TextUtils.equals(order, getString(R.string.pref_order_favorites))) {
+            getLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+        } else {
+            if (TextUtils.isEmpty(mOrder) || !mOrder.equals(order) || forceUpdate) {
+                mOrder = order;
+                FetchMovieList moviesTask = new FetchMovieList();
+                moviesTask.execute();
+            }
         }
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if (id == MOVIE_LOADER_ID) {
+            return new CursorLoader(getContext(),
+                    MoviesContract.MovieEntry.CONTENT_URI,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Movie[] movies = null;
+
+        if (data != null) {
+            movies = new Movie[data.getCount()];
+            int i = 0;
+            while (data.moveToNext()) {
+                movies[i] = new Movie();
+
+                movies[i].setId(data.getLong(data.getColumnIndex(MoviesContract.MovieEntry._ID)));
+                movies[i].setTitle(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_TITLE)));
+                movies[i].setSynopsis(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_SYNOPSIS)));
+                movies[i].setPosterPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_POSTER_URL)));
+                movies[i].setReleaseDate(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RELEASE)).substring(0, 4));
+                movies[i].setVoteAverage(data.getDouble(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RATING)));
+                i++;
+            }
+        }
+
+        mMovieAdapter.clear();
+        if (movies != null)
+            for (Movie movie : movies) {
+                mMovieAdapter.add(movie);
+            }
+        mMovieAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        //do nothing
     }
 
     private class ImageAdapter extends ArrayAdapter<Movie> {
