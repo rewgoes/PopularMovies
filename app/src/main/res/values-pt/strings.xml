@@ -26,5 +26,6 @@
     <string name="rating">Avaliação</string>
     <string name="loading_movies">Carregando Filmes</string>
     <string name="empty_list_view">Houve um problema ao carregar os filmes</string>
+    <string name="empty_favorite_list_view">Lista de favoritos está vazia</string>
 
 </resources>

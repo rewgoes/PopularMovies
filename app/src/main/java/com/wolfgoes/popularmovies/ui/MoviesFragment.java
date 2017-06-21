@@ -26,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -55,6 +56,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
 
     private final int MOVIE_LOADER_ID = 1;
+    private TextView mEmptyView;
 
     ArrayAdapter<Movie> mMovieAdapter;
     String mOrder;
@@ -102,9 +104,11 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         mMovieAdapter = new ImageAdapter(getContext());
         mMovieAdapter.setNotifyOnChange(false);
 
+        mEmptyView = (TextView) rootView.findViewById(R.id.empty_list_view);
+
         GridView gridView = (GridView) rootView.findViewById(R.id.movies_grid);
         gridView.setAdapter(mMovieAdapter);
-        gridView.setEmptyView(rootView.findViewById(R.id.empty_list_view));
+        gridView.setEmptyView(mEmptyView);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -127,13 +131,17 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         String order = prefs.getString(getString(R.string.pref_order_key), getString(R.string.pref_order_popular));
 
         if (TextUtils.equals(order, getString(R.string.pref_order_favorites))) {
+            mOrder = order;
             getLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+            mEmptyView.setText(getString(R.string.empty_favorite_list_view));
         } else {
+            getLoaderManager().destroyLoader(MOVIE_LOADER_ID);
             if (TextUtils.isEmpty(mOrder) || !mOrder.equals(order) || forceUpdate) {
                 mOrder = order;
                 FetchMovieList moviesTask = new FetchMovieList();
                 moviesTask.execute();
             }
+            mEmptyView.setText(getString(R.string.empty_list_view));
         }
     }
 

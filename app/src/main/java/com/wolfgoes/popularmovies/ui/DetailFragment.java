@@ -60,6 +60,7 @@ public class DetailFragment extends Fragment {
                         int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
 
                         if (rows == 1) {
+                            //TODO: remove Toast and button
                             Toast.makeText(getContext(), "Movie " + mMovie.getId() + " removed from favorites!", Toast.LENGTH_LONG).show();
                             mIsFavorite = false;
                             mFavoriteButton.setText("Add");
@@ -76,6 +77,7 @@ public class DetailFragment extends Fragment {
                         Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
 
                         if (uri != null) {
+                            //TODO: remove Toast and button
                             String id = uri.getLastPathSegment();
                             Toast.makeText(getContext(), "Movie " + id + " set as favorite!", Toast.LENGTH_LONG).show();
                             mIsFavorite = true;
@@ -122,6 +124,7 @@ public class DetailFragment extends Fragment {
 
         setFavorite();
 
+        //TODO: remove button
         mFavoriteButton.setText(mIsFavorite ? "Remove" : "Add");
 
         return rootView;
