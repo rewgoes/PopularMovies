@@ -2,6 +2,7 @@ package com.wolfgoes.popularmovies.ui;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -37,6 +38,7 @@ public class DetailFragment extends Fragment {
     private String mMovieStr;
     private Button mFavoriteButton;
     private Movie mMovie;
+    private boolean mIsFavorite;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -54,19 +56,31 @@ public class DetailFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (mMovie != null) {
-                    ContentValues contentValues = new ContentValues();
-                    contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
+                    if (mIsFavorite) {
+                        int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
 
-                    Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
+                        if (rows == 1) {
+                            Toast.makeText(getContext(), "Movie " + mMovie.getId() + " removed from favorites!", Toast.LENGTH_LONG).show();
+                            mIsFavorite = false;
+                            mFavoriteButton.setText("Add");
+                        }
+                    } else {
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
+                        contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
+                        contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
+                        contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
+                        contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
+                        contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
 
-                    if (uri != null) {
-                        String id = uri.getLastPathSegment();
-                        Toast.makeText(getContext(), "Movie " + id + " added!", Toast.LENGTH_LONG).show();
+                        Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
+
+                        if (uri != null) {
+                            String id = uri.getLastPathSegment();
+                            Toast.makeText(getContext(), "Movie " + id + " set as favorite!", Toast.LENGTH_LONG).show();
+                            mIsFavorite = true;
+                            mFavoriteButton.setText("Remove");
+                        }
                     }
                 }
             }
@@ -106,6 +120,10 @@ public class DetailFragment extends Fragment {
             }
         }
 
+        setFavorite();
+
+        mFavoriteButton.setText(mIsFavorite ? "Remove" : "Add");
+
         return rootView;
     }
 
@@ -137,5 +155,22 @@ public class DetailFragment extends Fragment {
         shareIntent.putExtra(Intent.EXTRA_TEXT,
                 mMovieStr + MOVIE_SHARE_HASHTAG);
         return shareIntent;
+    }
+
+    private void setFavorite() {
+        if (mMovie != null) {
+            Cursor movie = getContext().getContentResolver().query(
+                    MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()),
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            if (movie != null) {
+                mIsFavorite = movie.moveToFirst();
+                movie.close();
+            }
+        }
     }
 }

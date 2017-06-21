@@ -1,5 +1,6 @@
 package com.wolfgoes.popularmovies.data;
 
+import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
@@ -29,5 +30,8 @@ public class MoviesContract {
 
         public static final String COLUMN_POSTER_URL = "poster_url";
 
+        public static Uri buildMovieWithIdUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
     }
 }
