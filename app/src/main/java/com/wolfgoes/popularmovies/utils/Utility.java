@@ -1,5 +1,7 @@
 package com.wolfgoes.popularmovies.utils;
 
+import android.text.TextUtils;
+
 /**
  * Created by rafael on 23/07/2016.
  */
@@ -13,11 +15,12 @@ public final class Utility {
         throw new RuntimeException("No not try to instantiate this");
     }
 
-    //from Start Gliding video
-    public static String getPosterUrlForMovie(String posterName) {
+    public static String getPosterUrlForMovie(String posterName, String size) {
 
         //TODO: check size possibilities later
-        String size = "w185";
+        if (TextUtils.isEmpty(size)) {
+            size = "w185";
+        }
 
         return POSTER_BASE_URL + size + posterName;
     }
