@@ -63,7 +63,6 @@ public class DetailFragmentNew extends Fragment {
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
             @Override
             public void onGenerated(Palette palette) {
-                mCollapsingToolbarLayout.setBackgroundColor(palette.getMutedColor(R.attr.colorPrimaryDark));
                 mCollapsingToolbarLayout.setContentScrimColor(palette.getMutedColor(R.attr.colorPrimary));
                 mCollapsingToolbarLayout.setStatusBarScrimColor(palette.getMutedColor(R.attr.colorPrimaryDark));
             }
