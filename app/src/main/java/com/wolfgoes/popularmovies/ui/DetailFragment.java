@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -67,10 +68,6 @@ public class DetailFragment extends Fragment {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            mToolbar.setPadding(0, getStatusBarHeight(), 0, 0);
-//        }
 
         mCollapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.collapsing_toolbar);
 
@@ -167,22 +164,21 @@ public class DetailFragment extends Fragment {
 
         mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
 
-        //make status bar totally transparent TODO: this moves the tollBar behind the status bar
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            Window w = getActivity().getWindow(); // in Activity's onCreate() for instance
-//            w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-//        }
-
         return rootView;
     }
 
     private void dynamicToolbarColor(Bitmap bitmap) {
-        //TODO: get toolbar imageview image
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
             @Override
             public void onGenerated(Palette palette) {
-                mCollapsingToolbarLayout.setContentScrimColor(palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary)));
-                mCollapsingToolbarLayout.setStatusBarScrimColor(palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary)));
+                float[] hsv = new float[3];
+                int color = palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary));
+                Color.colorToHSV(color, hsv);
+                hsv[2] *= 0.8f; // value component
+                int darkColor = Color.HSVToColor(hsv);
+
+                mCollapsingToolbarLayout.setContentScrimColor(color);
+                mCollapsingToolbarLayout.setStatusBarScrimColor(darkColor);
             }
         });
     }
@@ -232,15 +228,5 @@ public class DetailFragment extends Fragment {
                 movie.close();
             }
         }
-    }
-
-    // A method to find height of the status bar
-    public int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
     }
 }
