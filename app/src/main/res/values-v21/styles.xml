@@ -2,6 +2,6 @@
 <resources>
     <!-- Make the status bar traslucent -->
     <style name="AppTheme.NoActionBar" parent="AppTheme.NoActionBar.Base">
-        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 </resources>
