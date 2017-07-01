@@ -5,7 +5,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
@@ -22,6 +25,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -30,7 +35,9 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.ImageViewTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
@@ -48,6 +55,7 @@ public class DetailFragment extends Fragment {
     private Button mFavoriteButton;
     private Movie mMovie;
     private boolean mIsFavorite;
+    private View mBackdropGradient;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -62,6 +70,8 @@ public class DetailFragment extends Fragment {
         mToolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
 
+        mBackdropGradient = rootView.findViewById(R.id.backdrop_gradient);
+
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -73,7 +83,10 @@ public class DetailFragment extends Fragment {
 
         mCollapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.collapsing_toolbar);
 
-        dynamicToolbarColor();
+        //make expanded title the same size of collapsed
+        mCollapsingToolbarLayout.setExpandedTitleTextAppearance(R.style.Toolbar_Title);
+        int titleMargin = getActivity().getResources().getDimensionPixelOffset(R.dimen.activity_vertical_margin);
+        mCollapsingToolbarLayout.setExpandedTitleMargin(titleMargin, 0, 0, titleMargin);
 
         mFavoriteButton = (Button) rootView.findViewById(R.id.favorite);
 
@@ -123,13 +136,13 @@ public class DetailFragment extends Fragment {
                     String title = mMovie.getTitle();
                     String releaseDate = mMovie.getReleaseDate();
                     String poster = mMovie.getPosterPath();
-                    String backdrop = mMovie.getBackdropPath();
+                    final String backdrop = mMovie.getBackdropPath();
                     double vote = mMovie.getVoteAverage();
                     String synopsis = mMovie.getSynopsis();
 
                     //Get all view
                     TextView releaseView = (TextView) rootView.findViewById(R.id.year);
-                    ImageView backdropView = (ImageView) rootView.findViewById(R.id.backdrop);
+                    final ImageView backdropView = (ImageView) rootView.findViewById(R.id.backdrop);
                     ImageView posterView = (ImageView) rootView.findViewById(R.id.poster);
                     TextView voteView = (TextView) rootView.findViewById(R.id.rate);
                     TextView overviewView = (TextView) rootView.findViewById(R.id.synopsis);
@@ -145,11 +158,15 @@ public class DetailFragment extends Fragment {
 
                     Glide.with(getContext())
                             .load(Utility.getPosterUrlForMovie(backdrop, "w1280"))
+                            .asBitmap()
                             .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                            .into(new ImageViewTarget<GlideDrawable>(backdropView) {
+                            .into(new SimpleTarget<Bitmap>() {
                                 @Override
-                                protected void setResource(GlideDrawable resource) {
-                                    setDrawable(resource);
+                                public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                    mBackdropGradient.setVisibility(View.VISIBLE);
+                                    backdropView.setImageBitmap(resource);
+                                    dynamicToolbarColor(resource);
+
                                 }
                             });
 
@@ -165,18 +182,22 @@ public class DetailFragment extends Fragment {
         //TODO: remove button
         mFavoriteButton.setText(mIsFavorite ? "Remove" : "Add");
 
+        //make status bar totally transparent TODO: this moves the tollBar behind the status bar
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            Window w = getActivity().getWindow(); // in Activity's onCreate() for instance
+//            w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+//        }
+
         return rootView;
     }
 
-    private void dynamicToolbarColor() {
-
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
-                R.drawable.backdrop);
+    private void dynamicToolbarColor(Bitmap bitmap) {
+        //TODO: get toolbar imageview image
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
             @Override
             public void onGenerated(Palette palette) {
-                mCollapsingToolbarLayout.setContentScrimColor(palette.getMutedColor(R.attr.colorPrimary));
-                mCollapsingToolbarLayout.setStatusBarScrimColor(palette.getMutedColor(R.attr.colorPrimaryDark));
+                mCollapsingToolbarLayout.setContentScrimColor(palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary)));
+                mCollapsingToolbarLayout.setStatusBarScrimColor(palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary)));
             }
         });
     }
