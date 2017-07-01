@@ -12,6 +12,7 @@ public class Movie implements Parcelable{
     //TODO: change it to date
     private String mReleaseDate;
     private String mPosterPath;
+    private String mBackdropPath;
     private double mVoteAverage;
     private String mSynopsis;
 
@@ -54,6 +55,14 @@ public class Movie implements Parcelable{
         this.mPosterPath = posterPath;
     }
 
+    public String getBackdropPath() {
+        return mBackdropPath;
+    }
+
+    public void setBackdropPath(String backdropPath) {
+        mBackdropPath = backdropPath;
+    }
+
     public double getVoteAverage() {
         return mVoteAverage;
     }
@@ -76,6 +85,7 @@ public class Movie implements Parcelable{
         mTitle = in.readString();
         mReleaseDate = in.readString();
         mPosterPath = in.readString();
+        mBackdropPath = in.readString();
         mVoteAverage = in.readDouble();
         mSynopsis = in.readString();
     }
@@ -91,6 +101,7 @@ public class Movie implements Parcelable{
         dest.writeString(mTitle);
         dest.writeString(mReleaseDate);
         dest.writeString(mPosterPath);
+        dest.writeString(mBackdropPath);
         dest.writeDouble(mVoteAverage);
         dest.writeString(mSynopsis);
     }

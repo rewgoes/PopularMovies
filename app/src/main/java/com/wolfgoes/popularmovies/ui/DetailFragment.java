@@ -3,11 +3,18 @@ package com.wolfgoes.popularmovies.ui;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.ShareActionProvider;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,30 +22,31 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.utils.Utility;
 
-/**
- * A placeholder fragment containing a simple view.
- */
 public class DetailFragment extends Fragment {
 
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
 
+    private CollapsingToolbarLayout mCollapsingToolbarLayout;
+    private Toolbar mToolbar;
+
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovies";
     private String mMovieStr;
-    private Button mFavoriteButton;
+    private FloatingActionButton mFavoriteButton;
     private Movie mMovie;
     private boolean mIsFavorite;
+    private View mBackdropGradient;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -50,7 +58,28 @@ public class DetailFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-        mFavoriteButton = (Button) rootView.findViewById(R.id.favorite);
+        mToolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
+        ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+
+        mBackdropGradient = rootView.findViewById(R.id.backdrop_gradient);
+
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            mToolbar.setPadding(0, getStatusBarHeight(), 0, 0);
+//        }
+
+        mCollapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.collapsing_toolbar);
+
+        //make expanded title the same size of collapsed
+        mCollapsingToolbarLayout.setExpandedTitleTextAppearance(R.style.Toolbar_Title);
+        int titleMargin = getActivity().getResources().getDimensionPixelOffset(R.dimen.activity_vertical_margin);
+        mCollapsingToolbarLayout.setExpandedTitleMargin(titleMargin, 0, 0, titleMargin);
+
+        mFavoriteButton = (FloatingActionButton) rootView.findViewById(R.id.favorite);
 
         mFavoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -60,16 +89,15 @@ public class DetailFragment extends Fragment {
                         int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
 
                         if (rows == 1) {
-                            //TODO: remove Toast and button
-                            Toast.makeText(getContext(), "Movie " + mMovie.getId() + " removed from favorites!", Toast.LENGTH_LONG).show();
                             mIsFavorite = false;
-                            mFavoriteButton.setText("Add");
+                            mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
                         }
                     } else {
                         ContentValues contentValues = new ContentValues();
                         contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
                         contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
                         contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
+                        contentValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL, mMovie.getBackdropPath());
                         contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
                         contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
                         contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
@@ -77,11 +105,8 @@ public class DetailFragment extends Fragment {
                         Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
 
                         if (uri != null) {
-                            //TODO: remove Toast and button
-                            String id = uri.getLastPathSegment();
-                            Toast.makeText(getContext(), "Movie " + id + " set as favorite!", Toast.LENGTH_LONG).show();
                             mIsFavorite = true;
-                            mFavoriteButton.setText("Remove");
+                            mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
                         }
                     }
                 }
@@ -97,24 +122,40 @@ public class DetailFragment extends Fragment {
                     String title = mMovie.getTitle();
                     String releaseDate = mMovie.getReleaseDate();
                     String poster = mMovie.getPosterPath();
+                    final String backdrop = mMovie.getBackdropPath();
                     double vote = mMovie.getVoteAverage();
                     String synopsis = mMovie.getSynopsis();
 
                     //Get all view
-                    TextView titleView = (TextView) rootView.findViewById(R.id.title);
                     TextView releaseView = (TextView) rootView.findViewById(R.id.year);
+                    final ImageView backdropView = (ImageView) rootView.findViewById(R.id.backdrop);
                     ImageView posterView = (ImageView) rootView.findViewById(R.id.poster);
                     TextView voteView = (TextView) rootView.findViewById(R.id.rate);
                     TextView overviewView = (TextView) rootView.findViewById(R.id.synopsis);
 
                     //Set values to the views
                     mMovieStr = title;
-                    titleView.setText(title);
+                    mCollapsingToolbarLayout.setTitle(title);
                     releaseView.setText(releaseDate);
                     Glide.with(getContext())
-                            .load(Utility.getPosterUrlForMovie(poster))
+                            .load(Utility.getPosterUrlForMovie(poster, null))
                             .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                             .into(posterView);
+
+                    Glide.with(getContext())
+                            .load(Utility.getPosterUrlForMovie(backdrop, "w1280"))
+                            .asBitmap()
+                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                            .into(new SimpleTarget<Bitmap>() {
+                                @Override
+                                public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                    mBackdropGradient.setVisibility(View.VISIBLE);
+                                    backdropView.setImageBitmap(resource);
+                                    dynamicToolbarColor(resource);
+
+                                }
+                            });
+
                     voteView.setText(Double.toString(vote) + "/10");
                     overviewView.setText(synopsis);
 
@@ -124,10 +165,26 @@ public class DetailFragment extends Fragment {
 
         setFavorite();
 
-        //TODO: remove button
-        mFavoriteButton.setText(mIsFavorite ? "Remove" : "Add");
+        mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
+
+        //make status bar totally transparent TODO: this moves the tollBar behind the status bar
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            Window w = getActivity().getWindow(); // in Activity's onCreate() for instance
+//            w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+//        }
 
         return rootView;
+    }
+
+    private void dynamicToolbarColor(Bitmap bitmap) {
+        //TODO: get toolbar imageview image
+        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+            @Override
+            public void onGenerated(Palette palette) {
+                mCollapsingToolbarLayout.setContentScrimColor(palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary)));
+                mCollapsingToolbarLayout.setStatusBarScrimColor(palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary)));
+            }
+        });
     }
 
     @Override
@@ -175,5 +232,15 @@ public class DetailFragment extends Fragment {
                 movie.close();
             }
         }
+    }
+
+    // A method to find height of the status bar
+    public int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 }

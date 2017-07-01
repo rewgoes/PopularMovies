@@ -173,6 +173,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                 movies[i].setTitle(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_TITLE)));
                 movies[i].setSynopsis(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_SYNOPSIS)));
                 movies[i].setPosterPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_POSTER_URL)));
+                movies[i].setBackdropPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL)));
                 movies[i].setReleaseDate(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RELEASE)).substring(0, 4));
                 movies[i].setVoteAverage(data.getDouble(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RATING)));
                 i++;
@@ -212,7 +213,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             ImageView poster = (ImageView) convertView.findViewById(R.id.poster);
 
             Glide.with(mContext)
-                    .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
+                    .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath(), null))
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .into(poster);
 
@@ -338,6 +339,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             final String JKEY_TITLE = "title";
             final String JKEY_DATE = "release_date";
             final String JKEY_POSTER = "poster_path";
+            final String JKEY_BACKDROP = "backdrop_path";
             final String JKEY_SYNOPSIS = "overview";
             final String JKEY_VOTE = "vote_average";
 
@@ -355,6 +357,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                 movies[i].setTitle(movie.getString(JKEY_TITLE));
                 movies[i].setSynopsis(movie.getString(JKEY_SYNOPSIS));
                 movies[i].setPosterPath(movie.getString(JKEY_POSTER));
+                movies[i].setBackdropPath(movie.getString(JKEY_BACKDROP));
                 movies[i].setReleaseDate(movie.getString(JKEY_DATE).substring(0, 4));
                 movies[i].setVoteAverage(movie.getDouble(JKEY_VOTE));
             }
