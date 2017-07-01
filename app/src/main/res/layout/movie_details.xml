@@ -54,13 +54,6 @@
         android:layout_height="wrap_content"
         android:text="@string/description_not_available"/>
 
-    <Button
-        android:id="@+id/favorite"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/detail_poster_padding"
-        android:text="Favorite"/>
-
     <TextView
         style="@style/TitleText"
         android:layout_width="match_parent"

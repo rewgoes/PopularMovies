@@ -4,13 +4,10 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
@@ -25,18 +22,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.data.MoviesContract;
@@ -52,7 +43,7 @@ public class DetailFragment extends Fragment {
 
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovies";
     private String mMovieStr;
-    private Button mFavoriteButton;
+    private FloatingActionButton mFavoriteButton;
     private Movie mMovie;
     private boolean mIsFavorite;
     private View mBackdropGradient;
@@ -88,7 +79,7 @@ public class DetailFragment extends Fragment {
         int titleMargin = getActivity().getResources().getDimensionPixelOffset(R.dimen.activity_vertical_margin);
         mCollapsingToolbarLayout.setExpandedTitleMargin(titleMargin, 0, 0, titleMargin);
 
-        mFavoriteButton = (Button) rootView.findViewById(R.id.favorite);
+        mFavoriteButton = (FloatingActionButton) rootView.findViewById(R.id.favorite);
 
         mFavoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,10 +89,8 @@ public class DetailFragment extends Fragment {
                         int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
 
                         if (rows == 1) {
-                            //TODO: remove Toast and button
-                            Toast.makeText(getContext(), "Movie " + mMovie.getId() + " removed from favorites!", Toast.LENGTH_LONG).show();
                             mIsFavorite = false;
-                            mFavoriteButton.setText("Add");
+                            mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
                         }
                     } else {
                         ContentValues contentValues = new ContentValues();
@@ -116,11 +105,8 @@ public class DetailFragment extends Fragment {
                         Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
 
                         if (uri != null) {
-                            //TODO: remove Toast and button
-                            String id = uri.getLastPathSegment();
-                            Toast.makeText(getContext(), "Movie " + id + " set as favorite!", Toast.LENGTH_LONG).show();
                             mIsFavorite = true;
-                            mFavoriteButton.setText("Remove");
+                            mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
                         }
                     }
                 }
@@ -179,8 +165,7 @@ public class DetailFragment extends Fragment {
 
         setFavorite();
 
-        //TODO: remove button
-        mFavoriteButton.setText(mIsFavorite ? "Remove" : "Add");
+        mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
 
         //make status bar totally transparent TODO: this moves the tollBar behind the status bar
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
