@@ -19,7 +19,7 @@
             app:contentScrim="?attr/colorPrimary"
             app:expandedTitleMarginBottom="@dimen/activity_horizontal_margin"
             app:expandedTitleMarginStart="@dimen/activity_horizontal_margin"
-            app:expandedTitleTextAppearance="@style/Toolbar.Title"
+            app:expandedTitleTextAppearance="@style/TextAppearance.AppCompat.Medium"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:maxLines="3">
 

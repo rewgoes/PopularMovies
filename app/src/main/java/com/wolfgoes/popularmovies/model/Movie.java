@@ -3,20 +3,28 @@ package com.wolfgoes.popularmovies.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-//TODO: check if Parcelable should be used
-//TODO: check if GSON should be used @Expose @SerializedName
-public class Movie implements Parcelable{
+import com.google.gson.annotations.SerializedName;
 
+public class Movie implements Parcelable {
+
+    @SerializedName("id")
     private long mId;
+    // TODO: check if original_title or title should be fetched.
+    @SerializedName("title")
     private String mTitle;
-    //TODO: change it to date
+    @SerializedName("release_date")
     private String mReleaseDate;
+    @SerializedName("poster_path")
     private String mPosterPath;
+    @SerializedName("backdrop_path")
     private String mBackdropPath;
+    @SerializedName("vote_average")
     private double mVoteAverage;
+    @SerializedName("overview")
     private String mSynopsis;
 
-    public Movie () { }
+    public Movie() {
+    }
 
     @Override
     public String toString() {
@@ -80,7 +88,7 @@ public class Movie implements Parcelable{
     }
 
     // Parcelling part
-    public Movie(Parcel in){
+    public Movie(Parcel in) {
         mId = in.readLong();
         mTitle = in.readString();
         mReleaseDate = in.readString();

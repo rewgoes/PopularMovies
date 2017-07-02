@@ -26,9 +26,4 @@
         <item name="android:textColor">#757575</item>
     </style>
 
-    <style name="Toolbar.Title" parent="TextAppearance.AppCompat.Medium">
-        <!-- TODO: in order to wrap title when expanded, I will need to create another custom view -->
-        <!-- https://android.googlesource.com/platform/frameworks/support/+/b2535ce06945e0b3b95590819b8e6467ea3ee29d -->
-    </style>
-
 </resources>
