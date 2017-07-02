@@ -7,7 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
@@ -35,6 +35,8 @@ import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.utils.Utility;
 
+import net.opacapp.multilinecollapsingtoolbar.CollapsingToolbarLayout;
+
 public class DetailFragment extends Fragment {
 
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
@@ -48,6 +50,7 @@ public class DetailFragment extends Fragment {
     private Movie mMovie;
     private boolean mIsFavorite;
     private View mBackdropGradient;
+    private AppBarLayout mAppBar;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -62,6 +65,14 @@ public class DetailFragment extends Fragment {
         mToolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
 
+        mAppBar = (AppBarLayout) rootView.findViewById(R.id.app_bar);
+
+        mAppBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+            }
+        });
+
         mBackdropGradient = rootView.findViewById(R.id.backdrop_gradient);
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
@@ -70,11 +81,6 @@ public class DetailFragment extends Fragment {
         }
 
         mCollapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.collapsing_toolbar);
-
-        //make expanded title the same size of collapsed
-        mCollapsingToolbarLayout.setExpandedTitleTextAppearance(R.style.Toolbar_Title);
-        int titleMargin = getActivity().getResources().getDimensionPixelOffset(R.dimen.activity_vertical_margin);
-        mCollapsingToolbarLayout.setExpandedTitleMargin(titleMargin, 0, 0, titleMargin);
 
         mFavoriteButton = (FloatingActionButton) rootView.findViewById(R.id.favorite);
 
