@@ -21,7 +21,7 @@
             app:expandedTitleMarginStart="@dimen/activity_horizontal_margin"
             app:expandedTitleTextAppearance="@style/Toolbar.Title"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
-            app:maxLines="2">
+            app:maxLines="3">
 
             <ImageView
                 android:id="@+id/backdrop"

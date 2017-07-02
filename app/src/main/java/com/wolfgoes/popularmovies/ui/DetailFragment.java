@@ -52,6 +52,9 @@ public class DetailFragment extends Fragment {
     private View mBackdropGradient;
     private AppBarLayout mAppBar;
 
+    private String mTitle;
+    private boolean isExpanded = true;
+
     public DetailFragment() {
         setHasOptionsMenu(true);
     }
@@ -70,6 +73,15 @@ public class DetailFragment extends Fragment {
         mAppBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (!isExpanded && Math.abs(verticalOffset) > 200) {
+                    isExpanded = true;
+                    mTitle = mTitle.replace(":\n", ": ");
+                    mCollapsingToolbarLayout.setTitle(mTitle);
+                } else if (isExpanded && Math.abs(verticalOffset) <= 200) {
+                    isExpanded = false;
+                    mTitle = mTitle.replace(": ", ":\n");
+                    mCollapsingToolbarLayout.setTitle(mTitle);
+                }
             }
         });
 
@@ -138,6 +150,8 @@ public class DetailFragment extends Fragment {
 
                     //Set values to the views
                     mMovieStr = title;
+
+                    mTitle = title.replace(": ", ":\n");
                     mCollapsingToolbarLayout.setTitle(title);
                     releaseView.setText(releaseDate);
                     Glide.with(getContext())
