@@ -6,4 +6,6 @@
     <color name="translucent">#CCFF0000</color>
     <color name="favorite_background">#FFFFFF</color>
     <color name="favorite_red">@color/translucent</color>
+    <color name="text_content_color">#757575</color>
+    <color name="text_header_color">#424242</color>
 </resources>

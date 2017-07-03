@@ -31,5 +31,6 @@
     <string name="loading_movies">Loading movies</string>
     <string name="empty_list_view">A problem happened while loading the movies</string>
     <string name="empty_favorite_list_view">Favorite list is empty</string>
+    <string name="action_favorite">Favorite</string>
 
 </resources>
