@@ -54,11 +54,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:src="@drawable/ic_favorite_false"
         app:backgroundTint="@color/favorite_background"
         app:fabSize="mini"
         app:layout_anchor="@id/app_bar"
-        app:layout_anchorGravity="bottom|end"/>
+        app:layout_anchorGravity="bottom|end"
+        app:srcCompat="@drawable/ic_favorite_false"/>
 
     <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"

@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
@@ -28,7 +29,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
-                android:scaleType="fitXY"/>
+                android:scaleType="fitCenter"/>
         </RelativeLayout>
 
         <LinearLayout
@@ -49,7 +50,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:src="@drawable/ic_date"/>
+                    app:srcCompat="@drawable/ic_date"/>
 
                 <TextView
                     android:id="@+id/year"
@@ -71,7 +72,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:src="@drawable/ic_star"/>
+                    app:srcCompat="@drawable/ic_star"/>
 
                 <TextView
                     android:id="@+id/rate"
