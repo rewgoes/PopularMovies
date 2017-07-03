@@ -3,8 +3,17 @@
       xmlns:tools="http://schemas.android.com/tools"
       tools:context="com.example.android.sunshine.app.DetailActivity">
     <item
+        android:id="@+id/action_favorite"
+        android:enabled="false"
+        android:icon="@drawable/ic_favorite_false_white"
+        android:orderInCategory="0"
+        android:title="@string/menu_action_favorite"
+        android:visible="false"
+        app:showAsAction="always"/>
+    <item
         android:id="@+id/action_share"
-        android:title="@string/menu_action_share"
         android:icon="@drawable/ic_share"
+        android:orderInCategory="1"
+        android:title="@string/menu_action_share"
         app:showAsAction="always"/>
 </menu>

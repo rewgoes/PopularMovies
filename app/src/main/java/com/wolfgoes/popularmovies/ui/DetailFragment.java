@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -49,8 +50,9 @@ public class DetailFragment extends Fragment {
     private View mBackdropGradient;
     private AppBarLayout mAppBar;
 
-    private String mTitle;
-    private boolean isExpanded = true;
+    private MenuItem mMenuFavorite;
+
+    private boolean mIsCollapsed = true;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -70,14 +72,16 @@ public class DetailFragment extends Fragment {
         mAppBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if (!isExpanded && Math.abs(verticalOffset) > 200) {
-                    isExpanded = true;
-                    mTitle = mTitle.replace(":\n", ": ");
-                    mCollapsingToolbarLayout.setTitle(mTitle);
-                } else if (isExpanded && Math.abs(verticalOffset) <= 200) {
-                    isExpanded = false;
-                    mTitle = mTitle.replace(": ", ":\n");
-                    mCollapsingToolbarLayout.setTitle(mTitle);
+                if (!mIsCollapsed && mCollapsingToolbarLayout.getScrimVisibleHeightTrigger() - mAppBar.getMeasuredHeight() >= verticalOffset) {
+                    mIsCollapsed = true;
+                    if (mMenuFavorite != null) {
+                        getActivity().invalidateOptionsMenu();
+                    }
+                } else if (mIsCollapsed && mCollapsingToolbarLayout.getScrimVisibleHeightTrigger() - mAppBar.getMeasuredHeight() < verticalOffset) {
+                    mIsCollapsed = false;
+                    if (mMenuFavorite != null) {
+                        getActivity().invalidateOptionsMenu();
+                    }
                 }
             }
         });
@@ -96,32 +100,7 @@ public class DetailFragment extends Fragment {
         mFavoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mMovie != null) {
-                    if (mIsFavorite) {
-                        int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
-
-                        if (rows == 1) {
-                            mIsFavorite = false;
-                            mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
-                        }
-                    } else {
-                        ContentValues contentValues = new ContentValues();
-                        contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
-                        contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
-                        contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
-                        contentValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL, mMovie.getBackdropPath());
-                        contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
-                        contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
-                        contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
-
-                        Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
-
-                        if (uri != null) {
-                            mIsFavorite = true;
-                            mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
-                        }
-                    }
-                }
+                setFavoriteAction();
             }
         });
 
@@ -148,7 +127,6 @@ public class DetailFragment extends Fragment {
                     //Set values to the views
                     mMovieStr = title;
 
-                    mTitle = title.replace(": ", ":\n");
                     mCollapsingToolbarLayout.setTitle(title);
                     releaseView.setText(releaseDate);
                     Glide.with(getContext())
@@ -184,6 +162,37 @@ public class DetailFragment extends Fragment {
         return rootView;
     }
 
+    private void setFavoriteAction() {
+        if (mMovie != null) {
+            if (mIsFavorite) {
+                int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
+
+                if (rows == 1) {
+                    mIsFavorite = false;
+                    mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
+                    getActivity().invalidateOptionsMenu();
+                }
+            } else {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL, mMovie.getBackdropPath());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
+
+                Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
+
+                if (uri != null) {
+                    mIsFavorite = true;
+                    mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
+                    getActivity().invalidateOptionsMenu();
+                }
+            }
+        }
+    }
+
     private void dynamicToolbarColor(Bitmap bitmap) {
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
             @Override
@@ -204,6 +213,11 @@ public class DetailFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.detailfragment, menu);
+
+        mMenuFavorite = menu.findItem(R.id.action_favorite);
+        mMenuFavorite.setIcon(mIsFavorite ? R.drawable.ic_favorite_true_white : R.drawable.ic_favorite_false_white);
+        mMenuFavorite.setVisible(mIsCollapsed);
+        mMenuFavorite.setEnabled(mIsCollapsed);
     }
 
     @Override
@@ -212,6 +226,8 @@ public class DetailFragment extends Fragment {
             case R.id.action_share:
                 actionShare();
                 return true;
+            case R.id.action_favorite:
+                setFavoriteAction();
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -228,6 +244,7 @@ public class DetailFragment extends Fragment {
             );
 
             if (movie != null) {
+                getActivity().invalidateOptionsMenu();
                 mIsFavorite = movie.moveToFirst();
                 movie.close();
             }
