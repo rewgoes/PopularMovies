@@ -51,7 +51,7 @@ public class MoviesContract {
 
         public static final String COLUMN_CONTENT = "release";
 
-        public static Uri buildMovieWithIdUri(long id) {
+        public static Uri buildReviewsFromMovieIdUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
@@ -70,7 +70,7 @@ public class MoviesContract {
 
         public static final String COLUMN_KEY = "key";
 
-        public static Uri buildMovieWithIdUri(long id) {
+        public static Uri buildVideosFromMovieIdUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }

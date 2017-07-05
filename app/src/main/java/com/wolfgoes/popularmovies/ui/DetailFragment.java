@@ -10,9 +10,14 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,20 +33,33 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.wolfgoes.popularmovies.R;
+import com.wolfgoes.popularmovies.api.ReviewApi;
 import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
+import com.wolfgoes.popularmovies.model.Review;
+import com.wolfgoes.popularmovies.network.Controller;
 import com.wolfgoes.popularmovies.utils.Utility;
 
 import net.opacapp.multilinecollapsingtoolbar.CollapsingToolbarLayout;
 
-public class DetailFragment extends Fragment {
+import java.util.ArrayList;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+
+public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, Callback<ReviewApi.ReviewResult> {
 
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
+
+    private static final String MOVIE_SHARE_HASHTAG = " #PopularMovies";
+    private static final int LOARDER_REVIEW_ID = 1;
+    private static final int LOARDER_VIDEO_ID = 2;
 
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Toolbar mToolbar;
 
-    private static final String MOVIE_SHARE_HASHTAG = " #PopularMovies";
     private String mMovieStr;
     private FloatingActionButton mFavoriteButton;
     private Movie mMovie;
@@ -52,6 +70,8 @@ public class DetailFragment extends Fragment {
     private MenuItem mMenuFavorite;
 
     private boolean mIsCollapsed = true;
+
+    private ReviewAdapter mReviewAdapter;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -157,6 +177,21 @@ public class DetailFragment extends Fragment {
         setFavorite();
 
         mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
+        mReviewAdapter = new ReviewAdapter(getContext(), new ArrayList<Review>());
+
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
+        linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+
+        RecyclerView reviewView = (RecyclerView) rootView.findViewById(R.id.reviews);
+        reviewView.setLayoutManager(linearLayoutManager);
+        reviewView.setAdapter(mReviewAdapter);
+
+        Controller controller = new Controller();
+        Retrofit retrofit = controller.getRetrofit();
+        ReviewApi reviewApi = retrofit.create(ReviewApi.class);
+
+        Call<ReviewApi.ReviewResult> call = reviewApi.loadReviews(mMovie.getId());
+        call.enqueue(this);
 
         return rootView;
     }
@@ -256,5 +291,43 @@ public class DetailFragment extends Fragment {
         textShareIntent.putExtra(Intent.EXTRA_TEXT, mMovieStr + MOVIE_SHARE_HASHTAG);
         if (textShareIntent.resolveActivity(getActivity().getPackageManager()) != null)
             startActivity(Intent.createChooser(textShareIntent, "Share"));
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        switch (id) {
+            case LOARDER_REVIEW_ID:
+                return new CursorLoader(getContext(), MoviesContract.ReviewEntry.buildReviewsFromMovieIdUri(mMovie.getId()),
+                        null, null, null, null);
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
+    @Override
+    public void onResponse(Call<ReviewApi.ReviewResult> call, Response<ReviewApi.ReviewResult> response) {
+        if (response.isSuccessful()) {
+            ReviewApi.ReviewResult reviewResult = response.body();
+
+            if (reviewResult != null) {
+                mReviewAdapter.setReviews(reviewResult.getReviews());
+                mReviewAdapter.notifyDataSetChanged();
+            }
+        }
+    }
+
+    @Override
+    public void onFailure(Call<ReviewApi.ReviewResult> call, Throwable t) {
+
     }
 }

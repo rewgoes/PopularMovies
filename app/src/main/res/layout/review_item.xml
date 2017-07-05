@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:layout_marginEnd="16dp"
     android:layout_marginStart="16dp"
     app:cardCornerRadius="5dp"
@@ -21,7 +21,7 @@
             style="@style/TitleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Rafael"/>
+            tools:text="Rafael"/>
 
         <View
             android:layout_width="match_parent"
@@ -36,9 +36,10 @@
             android:scrollbars="vertical">
 
             <TextView
+                android:id="@+id/review_content"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="As long as the kids stay in the picture -- thankfully, that's most of the movie -- Spider-Man: Homecoming is the fun playdate most of us have been looking forward to since the character stole Cap's shield last spring in Captain America: Civil War. As long as the kids stay in the picture -- thankfully, that's most of the movie -- Spider-Man: Homecoming is the fun playdate most of us have been looking forward to since the character stole Cap's shield last spring in Captain America: Civil War."/>
+                tools:text="As long as the kids stay in the picture -- thankfully, that's most of the movie -- Spider-Man: Homecoming is the fun playdate most of us have been looking forward to since the character stole Cap's shield last spring in Captain America: Civil War. As long as the kids stay in the picture -- thankfully, that's most of the movie -- Spider-Man: Homecoming is the fun playdate most of us have been looking forward to since the character stole Cap's shield last spring in Captain America: Civil War."/>
 
         </android.support.v4.widget.NestedScrollView>
 
