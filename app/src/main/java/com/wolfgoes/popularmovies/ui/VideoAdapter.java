@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -98,7 +99,11 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
         try {
             mContext.startActivity(appIntent);
         } catch (ActivityNotFoundException ex) {
-            mContext.startActivity(webIntent);
+            try {
+                mContext.startActivity(webIntent);
+            } catch (ActivityNotFoundException ex2) {
+                Toast.makeText(mContext, "Please, install Youtube or any Browser", Toast.LENGTH_LONG).show();
+            }
         }
     }
 }
