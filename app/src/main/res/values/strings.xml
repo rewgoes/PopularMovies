@@ -34,5 +34,6 @@
     <string name="menu_action_favorite">Favorite</string>
     <string name="reviews">Reviews</string>
     <string name="videos">Videos</string>
+    <string name="no_review_available">No review available</string>
 
 </resources>

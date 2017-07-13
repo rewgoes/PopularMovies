@@ -133,7 +133,15 @@
             android:id="@+id/reviews"
             android:layout_width="match_parent"
             android:layout_height="180dp"
-            android:layout_gravity="center_vertical" />
+            android:layout_gravity="center_vertical"/>
+
+        <TextView
+            android:id="@+id/empty_reviews"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/no_review_available"
+            android:visibility="gone"/>
 
         <!--<android.support.v7.widget.RecyclerView-->
         <!--android:layout_width="match_parent"-->

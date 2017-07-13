@@ -70,6 +70,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private MenuItem mMenuFavorite;
 
     private boolean mIsCollapsed = true;
+    private RecyclerView mReviewView;
+    private TextView mEmptyReview;
 
     private ReviewAdapter mReviewAdapter;
 
@@ -182,9 +184,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
 
-        RecyclerView reviewView = (RecyclerView) rootView.findViewById(R.id.reviews);
-        reviewView.setLayoutManager(linearLayoutManager);
-        reviewView.setAdapter(mReviewAdapter);
+        mReviewView = (RecyclerView) rootView.findViewById(R.id.reviews);
+        mReviewView.setLayoutManager(linearLayoutManager);
+        mReviewView.setAdapter(mReviewAdapter);
+
+        mEmptyReview = (TextView) rootView.findViewById(R.id.empty_reviews);
 
         Controller controller = new Controller();
         Retrofit retrofit = controller.getRetrofit();
@@ -232,7 +236,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             @Override
             public void onGenerated(Palette palette) {
                 float[] hsv = new float[3];
-                int color = palette.getVibrantColor(palette.getMutedColor(R.attr.colorPrimary));
+                int color = palette.getVibrantColor(palette.getMutedColor(palette.getDominantColor(R.attr.colorPrimary)));
                 Color.colorToHSV(color, hsv);
                 hsv[2] *= 0.8f; // value component
                 int darkColor = Color.HSVToColor(hsv);
@@ -319,11 +323,19 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         if (response.isSuccessful()) {
             ReviewApi.ReviewResult reviewResult = response.body();
 
-            if (reviewResult != null) {
+            if (reviewResult != null && reviewResult.getReviews().size() > 0) {
                 mReviewAdapter.setReviews(reviewResult.getReviews());
                 mReviewAdapter.notifyDataSetChanged();
+                showReview(true);
+            } else {
+                showReview(false);
             }
         }
+    }
+
+    private void showReview(boolean show) {
+        mReviewView.setVisibility(show ? View.VISIBLE : View.GONE);
+        mEmptyReview.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
     @Override
