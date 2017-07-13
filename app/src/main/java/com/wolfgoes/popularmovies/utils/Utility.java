@@ -8,6 +8,7 @@ import android.text.TextUtils;
 public final class Utility {
 
     final static String POSTER_BASE_URL = "http://image.tmdb.org/t/p/";
+    final static String VIDEO_BASE_URL = "http://img.youtube.com/vi/%s/mqdefault.jpg";
 
     //Create a non instantiable class
     //http://stackoverflow.com/questions/8848107/how-to-construct-a-non-instantiable-and-non-inheritable-class-in-java
@@ -23,6 +24,10 @@ public final class Utility {
         }
 
         return POSTER_BASE_URL + size + posterName;
+    }
+
+    public static String getVideoThumbnail(String posterName) {
+        return String.format(VIDEO_BASE_URL, posterName);
     }
 
 }

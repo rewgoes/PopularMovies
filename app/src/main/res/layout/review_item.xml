@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginEnd="16dp"
-    android:layout_marginStart="16dp"
+    android:layout_marginEnd="@dimen/review_video_margin"
+    android:layout_marginStart="@dimen/review_video_margin"
     app:cardCornerRadius="5dp"
     app:cardElevation="5dp">
 
