@@ -34,9 +34,11 @@ import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.api.ReviewApi;
+import com.wolfgoes.popularmovies.api.VideoApi;
 import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.model.Review;
+import com.wolfgoes.popularmovies.model.Video;
 import com.wolfgoes.popularmovies.network.Controller;
 import com.wolfgoes.popularmovies.utils.Utility;
 
@@ -49,7 +51,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
-public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, Callback<ReviewApi.ReviewResult> {
+public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
 
@@ -70,10 +72,14 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private MenuItem mMenuFavorite;
 
     private boolean mIsCollapsed = true;
+
     private RecyclerView mReviewView;
     private TextView mEmptyReview;
-
     private ReviewAdapter mReviewAdapter;
+
+    private RecyclerView mVideoView;
+    private TextView mEmptyVideo;
+    private VideoAdapter mVideoAdapter;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -179,23 +185,75 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         setFavorite();
 
         mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
-        mReviewAdapter = new ReviewAdapter(getContext(), new ArrayList<Review>());
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
 
+        Controller controller = new Controller();
+        Retrofit retrofit = controller.getRetrofit();
+
+        mReviewAdapter = new ReviewAdapter(getContext(), new ArrayList<Review>());
         mReviewView = (RecyclerView) rootView.findViewById(R.id.reviews);
         mReviewView.setLayoutManager(linearLayoutManager);
         mReviewView.setAdapter(mReviewAdapter);
-
         mEmptyReview = (TextView) rootView.findViewById(R.id.empty_reviews);
 
-        Controller controller = new Controller();
-        Retrofit retrofit = controller.getRetrofit();
         ReviewApi reviewApi = retrofit.create(ReviewApi.class);
+        Call<ReviewApi.ReviewResult> reviewCall = reviewApi.loadReviews(mMovie.getId());
+        reviewCall.enqueue(new Callback<ReviewApi.ReviewResult>() {
+            @Override
+            public void onResponse(Call<ReviewApi.ReviewResult> call, Response<ReviewApi.ReviewResult> response) {
+                if (response.isSuccessful()) {
+                    ReviewApi.ReviewResult reviewResult = response.body();
 
-        Call<ReviewApi.ReviewResult> call = reviewApi.loadReviews(mMovie.getId());
-        call.enqueue(this);
+                    if (reviewResult != null && reviewResult.getReviews().size() > 0) {
+                        mReviewAdapter.setReviews(reviewResult.getReviews());
+                        mReviewAdapter.notifyDataSetChanged();
+                        showReview(true);
+                    } else {
+                        showReview(false);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ReviewApi.ReviewResult> call, Throwable t) {
+
+            }
+        });
+
+        LinearLayoutManager videoLayoutManager = new LinearLayoutManager(getContext());
+        videoLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+
+        mVideoAdapter = new VideoAdapter(getContext(), new ArrayList<Video>());
+        mVideoView = (RecyclerView) rootView.findViewById(R.id.videos);
+        mVideoView.setLayoutManager(videoLayoutManager);
+        mVideoView.setAdapter(mVideoAdapter);
+        mEmptyVideo = (TextView) rootView.findViewById(R.id.empty_videos);
+
+        VideoApi videoApi = retrofit.create(VideoApi.class);
+        Call<VideoApi.VideoResult> videoCall = videoApi.loadVideos(mMovie.getId());
+        videoCall.enqueue(new Callback<VideoApi.VideoResult>() {
+            @Override
+            public void onResponse(Call<VideoApi.VideoResult> call, Response<VideoApi.VideoResult> response) {
+                if (response.isSuccessful()) {
+                    VideoApi.VideoResult videoResult = response.body();
+
+                    if (videoResult != null && videoResult.getVideos().size() > 0) {
+                        mVideoAdapter.setVideos(videoResult.getVideos());
+                        mVideoAdapter.notifyDataSetChanged();
+                        showVideo(true);
+                    } else {
+                        showVideo(false);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<VideoApi.VideoResult> call, Throwable t) {
+
+            }
+        });
 
         return rootView;
     }
@@ -318,28 +376,13 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     }
 
-    @Override
-    public void onResponse(Call<ReviewApi.ReviewResult> call, Response<ReviewApi.ReviewResult> response) {
-        if (response.isSuccessful()) {
-            ReviewApi.ReviewResult reviewResult = response.body();
-
-            if (reviewResult != null && reviewResult.getReviews().size() > 0) {
-                mReviewAdapter.setReviews(reviewResult.getReviews());
-                mReviewAdapter.notifyDataSetChanged();
-                showReview(true);
-            } else {
-                showReview(false);
-            }
-        }
-    }
-
     private void showReview(boolean show) {
         mReviewView.setVisibility(show ? View.VISIBLE : View.GONE);
         mEmptyReview.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
-    @Override
-    public void onFailure(Call<ReviewApi.ReviewResult> call, Throwable t) {
-
+    private void showVideo(boolean show) {
+        mVideoView.setVisibility(show ? View.VISIBLE : View.GONE);
+        mEmptyVideo.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 }

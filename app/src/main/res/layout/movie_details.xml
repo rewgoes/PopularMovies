@@ -159,7 +159,7 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="200dp"
         android:layout_marginEnd="@dimen/activity_horizontal_margin_negative"
         android:layout_marginStart="@dimen/activity_horizontal_margin_negative"
         android:background="@color/recycler_view_background">
@@ -176,19 +176,19 @@
             android:layout_gravity="bottom"
             android:background="@drawable/elevation_background_bottom"/>
 
-        <RelativeLayout
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/videos"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_gravity="center_vertical"/>
+
+        <TextView
+            android:id="@+id/empty_videos"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginBottom="10dp"
-            android:layout_marginTop="10dp"
-            android:gravity="center">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scaleType="fitXY"
-                android:src="@drawable/video_example"/>
-        </RelativeLayout>
+            android:gravity="center"
+            android:text="@string/no_video_available"
+            android:visibility="gone"/>
 
         <!--<android.support.v7.widget.RecyclerView-->
         <!--android:layout_width="match_parent"-->

@@ -35,5 +35,6 @@
     <string name="reviews">Reviews</string>
     <string name="videos">Videos</string>
     <string name="no_review_available">No review available</string>
+    <string name="no_video_available">No video available</string>
 
 </resources>
