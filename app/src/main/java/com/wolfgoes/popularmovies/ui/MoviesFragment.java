@@ -1,7 +1,6 @@
 package com.wolfgoes.popularmovies.ui;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -12,6 +11,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,22 +21,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.api.MovieApi;
 import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.network.Controller;
-import com.wolfgoes.popularmovies.utils.Utility;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -55,7 +50,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     private TextView mEmptyView;
     private ProgressDialog mDialog;
 
-    ArrayAdapter<Movie> mMovieAdapter;
+    MovieAdapter mMovieAdapter;
     String mOrder;
 
     @Override
@@ -100,23 +95,14 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
         mDialog = new ProgressDialog(getContext());
 
-        mMovieAdapter = new ImageAdapter(getContext());
-        mMovieAdapter.setNotifyOnChange(false);
-
+        mMovieAdapter = new MovieAdapter(getContext(), new ArrayList<Movie>());
         mEmptyView = (TextView) rootView.findViewById(R.id.empty_list_view);
 
-        GridView gridView = (GridView) rootView.findViewById(R.id.movies_grid);
-        gridView.setAdapter(mMovieAdapter);
-        gridView.setEmptyView(mEmptyView);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), GridLayoutManager.DEFAULT_SPAN_COUNT);
+        gridLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
 
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Intent intent = new Intent(getContext(), DetailActivity.class)
-                        .putExtra("movie", mMovieAdapter.getItem(position));
-                startActivity(intent);
-            }
-        });
+        DynamicSpanRecyclerView recyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
+        recyclerView.setAdapter(mMovieAdapter);
 
         return rootView;
     }
@@ -171,30 +157,24 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Movie[] movies = null;
+        List<Movie> movies = new ArrayList<>();
 
         if (data != null) {
-            movies = new Movie[data.getCount()];
-            int i = 0;
             while (data.moveToNext()) {
-                movies[i] = new Movie();
+                Movie movie = new Movie();
 
-                movies[i].setId(data.getLong(data.getColumnIndex(MoviesContract.MovieEntry._ID)));
-                movies[i].setTitle(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_TITLE)));
-                movies[i].setSynopsis(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_SYNOPSIS)));
-                movies[i].setPosterPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_POSTER_URL)));
-                movies[i].setBackdropPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL)));
-                movies[i].setReleaseDate(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RELEASE)).substring(0, 4));
-                movies[i].setVoteAverage(data.getDouble(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RATING)));
-                i++;
+                movie.setId(data.getLong(data.getColumnIndex(MoviesContract.MovieEntry._ID)));
+                movie.setTitle(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_TITLE)));
+                movie.setSynopsis(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_SYNOPSIS)));
+                movie.setPosterPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_POSTER_URL)));
+                movie.setBackdropPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL)));
+                movie.setReleaseDate(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RELEASE)).substring(0, 4));
+                movie.setVoteAverage(data.getDouble(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RATING)));
+                movies.add(movie);
             }
         }
 
-        mMovieAdapter.clear();
-        if (movies != null)
-            for (Movie movie : movies) {
-                mMovieAdapter.add(movie);
-            }
+        mMovieAdapter.setMovies(movies);
         mMovieAdapter.notifyDataSetChanged();
     }
 
@@ -214,18 +194,12 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             if (changesList != null) {
                 List<Movie> movies = changesList.getMovies();
 
-//            if (mDialog != null && mDialog.isShowing())
-//                mDialog.dismiss();
-
                 if (movies == null)
                     Log.d(LOG_TAG, "Error: no movies were fetched");
                 else {
                     if (BuildConfig.DEBUG)
                         Log.d(LOG_TAG, "Number of movies fetched: " + movies.size());
-                    mMovieAdapter.clear();
-                    for (Movie movie : movies) {
-                        mMovieAdapter.add(movie);
-                    }
+                    mMovieAdapter.setMovies(movies);
                     mMovieAdapter.notifyDataSetChanged();
                 }
             }
@@ -237,33 +211,5 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public void onFailure(Call<MovieApi.MovieResult> call, Throwable t) {
         t.printStackTrace();
-    }
-
-    private class ImageAdapter extends ArrayAdapter<Movie> {
-        private Context mContext;
-        private LayoutInflater inflater;
-
-        public ImageAdapter(Context context) {
-            super(context, R.layout.movie_item, R.id.movies_grid);
-
-            mContext = context;
-            inflater = LayoutInflater.from(mContext);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = inflater.inflate(R.layout.movie_item, parent, false);
-            }
-
-            ImageView poster = (ImageView) convertView.findViewById(R.id.poster);
-
-            Glide.with(mContext)
-                    .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath(), null))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                    .into(poster);
-
-            return convertView;
-        }
     }
 }

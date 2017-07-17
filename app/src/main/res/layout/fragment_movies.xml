@@ -1,24 +1,25 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.MoviesFragment">
 
     <!-- TODO: change it to RecyclerView -->
-    <GridView
+    <com.wolfgoes.popularmovies.ui.DynamicSpanRecyclerView
         android:id="@+id/movies_grid"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
         android:columnWidth="@dimen/movie_item_width"
-        android:gravity="center_horizontal"
         android:minHeight="@dimen/movie_item_height"
-        android:numColumns="auto_fit" /> <!-- check android:stretchMode -->
+        android:paddingBottom="@dimen/review_video_margin"/>
 
     <TextView
         android:id="@+id/empty_list_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone" />
+        android:visibility="gone"/>
 
 </FrameLayout>
