@@ -66,12 +66,6 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                 .into(holder.videoImage);
 
-        if (adapterPosition == mVideos.size() - 1) {
-            RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) holder.itemView.getLayoutParams();
-            params.setMarginEnd(mContext.getResources().getDimensionPixelOffset(R.dimen.review_video_margin));
-            holder.itemView.setLayoutParams(params);
-        }
-
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -21,8 +21,8 @@
             android:id="@+id/video_image"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="58dp"
             android:adjustViewBounds="true"
+            android:minHeight="58dp"
             android:scaleType="fitCenter"/>
 
         <TextView

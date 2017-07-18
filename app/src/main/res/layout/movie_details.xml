@@ -180,7 +180,9 @@
             android:id="@+id/videos"
             android:layout_width="match_parent"
             android:layout_height="180dp"
-            android:layout_gravity="center_vertical"/>
+            android:layout_gravity="center_vertical"
+            android:clipToPadding="false"
+            android:paddingEnd="@dimen/review_video_margin"/>
 
         <TextView
             android:id="@+id/empty_videos"
