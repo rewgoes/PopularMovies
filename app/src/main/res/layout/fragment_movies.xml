@@ -5,11 +5,11 @@
     android:layout_height="match_parent"
     tools:context=".ui.MoviesFragment">
 
-    <!-- TODO: change it to RecyclerView -->
     <com.wolfgoes.popularmovies.ui.DynamicSpanRecyclerView
         android:id="@+id/movies_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:clipToPadding="false"
         android:columnWidth="@dimen/movie_item_width"
         android:minHeight="@dimen/movie_item_height"
