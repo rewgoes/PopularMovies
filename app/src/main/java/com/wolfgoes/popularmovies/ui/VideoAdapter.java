@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,16 +18,10 @@ import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.model.Video;
 import com.wolfgoes.popularmovies.utils.Utility;
 
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
-
 import java.util.ArrayList;
 import java.util.List;
 
 class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
-
-    private Parser mParser = Parser.builder().build();
-    private HtmlRenderer mRenderer = HtmlRenderer.builder().build();
 
     void setVideos(List<Video> videos) {
         if (videos == null) {
