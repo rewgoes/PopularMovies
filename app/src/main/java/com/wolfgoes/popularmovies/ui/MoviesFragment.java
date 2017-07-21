@@ -53,10 +53,8 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     private DynamicSpanRecyclerView mRecyclerView;
 
     MovieAdapter mMovieAdapter;
-    String mOrder;
 
     @Override
-    //http://stackoverflow.com/questions/14076296/nullable-annotation-usage
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
@@ -65,12 +63,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.main, menu);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        fetchMovieList();
     }
 
     @Override
@@ -83,10 +75,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.menu_action_refresh) {
-            fetchMovieList(true);
-            return true;
-        }
         if (id == R.id.action_settings) {
             startActivity(new Intent(getContext(), SettingsActivity.class));
             return true;
@@ -115,36 +103,24 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         return rootView;
     }
 
-    private void fetchMovieList() {
-        fetchMovieList(false);
-    }
-
-    private void fetchMovieList(boolean forceUpdate) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        String order = prefs.getString(getString(R.string.pref_order_key), getString(R.string.pref_order_popular));
-
+    public void fetchMovieList(String order) {
         if (TextUtils.equals(order, getString(R.string.pref_order_favorites))) {
-            mOrder = order;
             getLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
             mEmptyView.setText(getString(R.string.empty_favorite_list_view));
         } else {
             getLoaderManager().destroyLoader(MOVIE_LOADER_ID);
-            //TODO: mOrder is null
-            if (TextUtils.isEmpty(mOrder) || !mOrder.equals(order) || forceUpdate) {
-                mOrder = order;
 
-                Controller controller = new Controller();
-                Retrofit retrofit = controller.getRetrofit();
+            Controller controller = new Controller();
+            Retrofit retrofit = controller.getRetrofit();
 
-                MovieApi movieApi = retrofit.create(MovieApi.class);
+            MovieApi movieApi = retrofit.create(MovieApi.class);
 
-                Call<MovieApi.MovieResult> call = movieApi.loadMovies(mOrder, Locale.getDefault().getLanguage());
-                call.enqueue(this);
+            Call<MovieApi.MovieResult> call = movieApi.loadMovies(order, Locale.getDefault().getLanguage());
+            call.enqueue(this);
 
-                if (mDialog != null) {
-                    mDialog.setMessage(getString(R.string.loading_movies));
-                    mDialog.show();
-                }
+            if (mDialog != null) {
+                mDialog.setMessage(getString(R.string.loading_movies));
+                mDialog.show();
             }
             mEmptyView.setText(getString(R.string.empty_list_view));
         }

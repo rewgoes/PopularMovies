@@ -1,10 +1,12 @@
 package com.wolfgoes.popularmovies.utils;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
-/**
- * Created by rafael on 23/07/2016.
- */
+import com.wolfgoes.popularmovies.R;
+
 public final class Utility {
 
     final static String POSTER_BASE_URL = "http://image.tmdb.org/t/p/";
@@ -28,6 +30,11 @@ public final class Utility {
 
     public static String getVideoThumbnail(String posterName) {
         return String.format(VIDEO_BASE_URL, posterName);
+    }
+
+    public static String getOrderPreference(Context context) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return sharedPreferences.getString(context.getString(R.string.pref_order_key), context.getString(R.string.pref_order_popular));
     }
 
 }
