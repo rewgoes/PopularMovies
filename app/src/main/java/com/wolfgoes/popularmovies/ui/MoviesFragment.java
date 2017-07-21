@@ -72,6 +72,12 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        dismissProgressDialog();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
@@ -121,6 +127,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             mEmptyView.setText(getString(R.string.empty_favorite_list_view));
         } else {
             getLoaderManager().destroyLoader(MOVIE_LOADER_ID);
+            //TODO: mOrder is null
             if (TextUtils.isEmpty(mOrder) || !mOrder.equals(order) || forceUpdate) {
                 mOrder = order;
 
@@ -183,11 +190,19 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         //do nothing
     }
 
+    private void dismissProgressDialog() {
+        if (mDialog != null && mDialog.isShowing()) {
+            mDialog.dismiss();
+        }
+    }
+
     @Override
     public void onResponse(Call<MovieApi.MovieResult> call, Response<MovieApi.MovieResult> response) {
         if (response.isSuccessful()) {
-            if (mDialog != null && mDialog.isShowing())
-                mDialog.dismiss();
+            if (getActivity() == null || getActivity().isDestroyed()) {
+                return;
+            }
+            dismissProgressDialog();
 
             MovieApi.MovieResult changesList = response.body();
 
