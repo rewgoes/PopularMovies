@@ -30,6 +30,7 @@ import com.wolfgoes.popularmovies.data.MoviesContract;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.network.Controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -49,6 +50,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     private final int MOVIE_LOADER_ID = 1;
     private TextView mEmptyView;
     private ProgressDialog mDialog;
+    private DynamicSpanRecyclerView mRecyclerView;
 
     MovieAdapter mMovieAdapter;
     String mOrder;
@@ -107,8 +109,8 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), GridLayoutManager.DEFAULT_SPAN_COUNT);
         gridLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
 
-        DynamicSpanRecyclerView recyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
-        recyclerView.setAdapter(mMovieAdapter);
+        mRecyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
+        mRecyclerView.setAdapter(mMovieAdapter);
 
         return rootView;
     }
@@ -183,6 +185,12 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
         mMovieAdapter.setMovies(movies);
         mMovieAdapter.notifyDataSetChanged();
+
+        if (mMovieAdapter.getItemCount() > 0) {
+            showRecyclerView(true);
+        } else {
+            showRecyclerView(false);
+        }
     }
 
     @Override
@@ -202,6 +210,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             if (getActivity() == null || getActivity().isDestroyed()) {
                 return;
             }
+
             dismissProgressDialog();
 
             MovieApi.MovieResult changesList = response.body();
@@ -218,13 +227,41 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                     mMovieAdapter.notifyDataSetChanged();
                 }
             }
+
+            if (mMovieAdapter.getItemCount() > 0) {
+                showRecyclerView(true);
+            } else {
+                showRecyclerView(false);
+            }
         } else {
-            System.out.println(response.errorBody());
+            Log.e(LOG_TAG, "onResponse failed!");
+            showRecyclerView(false);
+
+            if (response.errorBody() != null) {
+                try {
+                    Log.e(LOG_TAG, response.errorBody().string());
+                } catch (IOException | NullPointerException e) {
+                    //do nothing
+                }
+            }
         }
     }
 
     @Override
     public void onFailure(Call<MovieApi.MovieResult> call, Throwable t) {
-        t.printStackTrace();
+        Log.e(LOG_TAG, "onFailure " + t.toString());
+
+        if (getActivity() == null || getActivity().isDestroyed()) {
+            return;
+        }
+
+        dismissProgressDialog();
+
+        showRecyclerView(false);
+    }
+
+    private void showRecyclerView(boolean show) {
+        mRecyclerView.setVisibility(show ? View.VISIBLE : View.GONE);
+        mEmptyView.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 }
