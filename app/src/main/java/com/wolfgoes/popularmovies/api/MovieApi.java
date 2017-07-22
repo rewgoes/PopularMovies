@@ -3,7 +3,7 @@ package com.wolfgoes.popularmovies.api;
 import com.google.gson.annotations.SerializedName;
 import com.wolfgoes.popularmovies.model.Movie;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -17,9 +17,9 @@ public interface MovieApi {
 
     class MovieResult {
         @SerializedName("results")
-        private List<Movie> mMovies;
+        private ArrayList<Movie> mMovies;
 
-        public List<Movie> getMovies() {
+        public ArrayList<Movie> getMovies() {
             return mMovies;
         }
     }
