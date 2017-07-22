@@ -9,7 +9,7 @@ import com.wolfgoes.popularmovies.utils.Utility;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String STATE_MOVIE_ORDER = "extra_movie_order";
+    private static final String STATE_MOVIE_ORDER = "extra_movie_order";
 
     private String mOrder;
 
@@ -44,12 +44,15 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         String order = Utility.getOrderPreference(this);
         // update the location in our second pane using the fragment manager
-        if (!TextUtils.isEmpty(order) && (!TextUtils.equals(order, mOrder) || mOrder == null)) {
-            MoviesFragment mf = (MoviesFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-            if ( null != mf ) {
+
+        MoviesFragment mf = (MoviesFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        if ( null != mf ) {
+            if (TextUtils.equals(order, getString(R.string.pref_order_favorites))) {
+                mf.initLoader();
+            } else if (!TextUtils.equals(order, mOrder) || mOrder == null) {
                 mf.fetchMovieList(order);
             }
-            mOrder = order;
         }
+        mOrder = order;
     }
 }

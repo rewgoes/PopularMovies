@@ -44,12 +44,14 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
     public static final String STATE_MOVIE_LIST = "state_movie_list";
+    private static final String STATE_MOVIE_ORDER = "extra_movie_order";
 
     private final int MOVIE_LOADER_ID = 1;
     private TextView mEmptyView;
     private ProgressDialog mDialog;
     private DynamicSpanRecyclerView mRecyclerView;
     private ArrayList<Movie> mMovies;
+    private String mOrder;
 
     MovieAdapter mMovieAdapter;
 
@@ -86,6 +88,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelableArrayList(STATE_MOVIE_LIST, mMovies);
+        outState.putString(STATE_MOVIE_ORDER, mOrder);
     }
 
     @Override
@@ -114,6 +117,11 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
         if (savedInstanceState != null) {
             mMovies = savedInstanceState.getParcelableArrayList(STATE_MOVIE_LIST);
+            mOrder = savedInstanceState.getString(STATE_MOVIE_ORDER);
+
+            if (TextUtils.equals(mOrder, getString(R.string.pref_order_favorites))) {
+                initLoader();
+            }
 
             if (mMovies != null) {
                 mMovieAdapter.setMovies(mMovies);
@@ -121,27 +129,28 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         }
     }
 
+    public void initLoader() {
+        getLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+        mEmptyView.setText(getString(R.string.empty_favorite_list_view));
+    }
+
     public void fetchMovieList(String order) {
-        if (TextUtils.equals(order, getString(R.string.pref_order_favorites))) {
-            getLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
-            mEmptyView.setText(getString(R.string.empty_favorite_list_view));
-        } else {
-            getLoaderManager().destroyLoader(MOVIE_LOADER_ID);
+        mOrder = order;
+        getLoaderManager().destroyLoader(MOVIE_LOADER_ID);
 
-            Controller controller = new Controller();
-            Retrofit retrofit = controller.getRetrofit();
+        Controller controller = new Controller();
+        Retrofit retrofit = controller.getRetrofit();
 
-            MovieApi movieApi = retrofit.create(MovieApi.class);
+        MovieApi movieApi = retrofit.create(MovieApi.class);
 
-            Call<MovieApi.MovieResult> call = movieApi.loadMovies(order, Locale.getDefault().getLanguage());
-            call.enqueue(this);
+        Call<MovieApi.MovieResult> call = movieApi.loadMovies(order, Locale.getDefault().getLanguage());
+        call.enqueue(this);
 
-            if (mDialog != null) {
-                mDialog.setMessage(getString(R.string.loading_movies));
-                mDialog.show();
-            }
-            mEmptyView.setText(getString(R.string.empty_list_view));
+        if (mDialog != null) {
+            mDialog.setMessage(getString(R.string.loading_movies));
+            mDialog.show();
         }
+        mEmptyView.setText(getString(R.string.empty_list_view));
     }
 
     @Override
