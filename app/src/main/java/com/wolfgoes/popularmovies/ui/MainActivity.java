@@ -9,21 +9,21 @@ import com.wolfgoes.popularmovies.utils.Utility;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String EXTRA_MOVIE_ORDER = "extra_movie_order";
+    public static final String STATE_MOVIE_ORDER = "extra_movie_order";
 
     private String mOrder;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString(EXTRA_MOVIE_ORDER, mOrder);
+        outState.putString(STATE_MOVIE_ORDER, mOrder);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
-            mOrder = savedInstanceState.getString(EXTRA_MOVIE_ORDER);
+            mOrder = savedInstanceState.getString(STATE_MOVIE_ORDER);
         }
 
         setContentView(R.layout.activity_main);

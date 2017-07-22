@@ -2,10 +2,8 @@ package com.wolfgoes.popularmovies.ui;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -32,7 +30,6 @@ import com.wolfgoes.popularmovies.network.Controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 import retrofit2.Call;
@@ -41,16 +38,18 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 /**
- * Fragment {@link MoviesFragment} shows all movies organized in a grid.
+ * Fragment {@link MoviesFragment} shows all mMovies organized in a grid.
  */
 public class MoviesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, Callback<MovieApi.MovieResult> {
 
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
+    public static final String STATE_MOVIE_LIST = "state_movie_list";
 
     private final int MOVIE_LOADER_ID = 1;
     private TextView mEmptyView;
     private ProgressDialog mDialog;
     private DynamicSpanRecyclerView mRecyclerView;
+    private ArrayList<Movie> mMovies;
 
     MovieAdapter mMovieAdapter;
 
@@ -84,6 +83,12 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(STATE_MOVIE_LIST, mMovies);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
@@ -101,6 +106,19 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         mRecyclerView.setAdapter(mMovieAdapter);
 
         return rootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        if (savedInstanceState != null) {
+            mMovies = savedInstanceState.getParcelableArrayList(STATE_MOVIE_LIST);
+
+            if (mMovies != null) {
+                mMovieAdapter.setMovies(mMovies);
+            }
+        }
     }
 
     public void fetchMovieList(String order) {
@@ -142,7 +160,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        List<Movie> movies = new ArrayList<>();
+        mMovies = new ArrayList<>();
 
         if (data != null) {
             while (data.moveToNext()) {
@@ -155,11 +173,11 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                 movie.setBackdropPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL)));
                 movie.setReleaseDate(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RELEASE)).substring(0, 4));
                 movie.setVoteAverage(data.getDouble(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RATING)));
-                movies.add(movie);
+                mMovies.add(movie);
             }
         }
 
-        mMovieAdapter.setMovies(movies);
+        mMovieAdapter.setMovies(mMovies);
         mMovieAdapter.notifyDataSetChanged();
 
         if (mMovieAdapter.getItemCount() > 0) {
@@ -192,14 +210,14 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             MovieApi.MovieResult changesList = response.body();
 
             if (changesList != null) {
-                List<Movie> movies = changesList.getMovies();
+                mMovies = changesList.getMovies();
 
-                if (movies == null)
-                    Log.d(LOG_TAG, "Error: no movies were fetched");
+                if (mMovies == null)
+                    Log.d(LOG_TAG, "Error: no mMovies were fetched");
                 else {
                     if (BuildConfig.DEBUG)
-                        Log.d(LOG_TAG, "Number of movies fetched: " + movies.size());
-                    mMovieAdapter.setMovies(movies);
+                        Log.d(LOG_TAG, "Number of mMovies fetched: " + mMovies.size());
+                    mMovieAdapter.setMovies(mMovies);
                     mMovieAdapter.notifyDataSetChanged();
                 }
             }
