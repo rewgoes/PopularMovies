@@ -104,7 +104,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
         mRecyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
 
-        mMovieAdapter = new MovieAdapter(mRecyclerView, getContext(), new ArrayList<Movie>());
+        mMovieAdapter = new MovieAdapter(getContext(), new ArrayList<Movie>());
         mEmptyView = (TextView) rootView.findViewById(R.id.empty_list_view);
 
         final GridLayoutManager gridLayoutManager = (GridLayoutManager) mRecyclerView.getLayoutManager();
@@ -124,22 +124,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
         mRecyclerView.setAdapter(mMovieAdapter);
 
-        //set load more listener for the RecyclerView adapter
-        mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
-            @Override
-            public void onLoadMore() {
-                if (mLoadMore) {
-                    mMovies.add(null);
-                    mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
-
-                    int page = (mMovies.size() / 20) + 1;
-                    fetchMovieList(mOrder, page);
-                } else {
-                    Toast.makeText(getContext(), "Loading data completed", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
         return rootView;
     }
 
@@ -153,6 +137,26 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
             if (TextUtils.equals(mOrder, getString(R.string.pref_order_favorites))) {
                 initLoader();
+            } else {
+                if (!TextUtils.isEmpty(mOrder)) {
+                    //set load more listener for the RecyclerView adapter
+                    mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+                        @Override
+                        public void onLoadMore() {
+                            if (mLoadMore) {
+                                if (mMovies != null) {
+                                    mMovies.add(null);
+                                    mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
+
+                                    int page = (mMovies.size() / 20) + 1;
+                                    fetchMovieList(mOrder, page);
+                                }
+                            } else {
+                                Toast.makeText(getContext(), R.string.no_more_movies, Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }, mRecyclerView);
+                }
             }
 
             if (mMovies != null) {
@@ -162,6 +166,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     }
 
     public void initLoader() {
+        mMovieAdapter.setOnLoadMoreListener(null, mRecyclerView);
         getLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
         mEmptyView.setText(getString(R.string.empty_favorite_list_view));
     }
@@ -175,7 +180,28 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         mOrder = order;
 
         if (orderChanged) {
-            mMovies = null;
+            mMovies = new ArrayList<>();
+
+            mMovieAdapter.setMovies(mMovies);
+            mMovieAdapter.notifyDataSetChanged();
+
+            //set load more listener for the RecyclerView adapter
+            mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+                @Override
+                public void onLoadMore() {
+                    if (mLoadMore) {
+                        if (mMovies != null) {
+                            mMovies.add(null);
+                            mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
+
+                            int page = (mMovies.size() / 20) + 1;
+                            fetchMovieList(mOrder, page);
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "Loading data completed", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }, mRecyclerView);
         }
 
         getLoaderManager().destroyLoader(MOVIE_LOADER_ID);

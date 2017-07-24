@@ -42,25 +42,9 @@ class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<Movie> mMovies;
     private Context mContext;
 
-    MovieAdapter(RecyclerView recyclerView, Context context, List<Movie> movies) {
+    MovieAdapter(Context context, List<Movie> movies) {
         mMovies = movies;
         mContext = context;
-
-        final GridLayoutManager gridLayoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                totalItemCount = gridLayoutManager.getItemCount();
-                lastVisibleItem = gridLayoutManager.findLastVisibleItemPosition();
-                if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-                    if (mOnLoadMoreListener != null) {
-                        mOnLoadMoreListener.onLoadMore();
-                    }
-                    isLoading = true;
-                }
-            }
-        });
     }
 
     private static class MovieViewHolder extends RecyclerView.ViewHolder {
@@ -129,8 +113,28 @@ class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return mMovies == null ? 0 : mMovies.size();
     }
 
-    public void setOnLoadMoreListener(OnLoadMoreListener mOnLoadMoreListener) {
-        this.mOnLoadMoreListener = mOnLoadMoreListener;
+    public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener, RecyclerView recyclerView) {
+        this.mOnLoadMoreListener = onLoadMoreListener;
+        recyclerView.clearOnScrollListeners();
+
+        final GridLayoutManager gridLayoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
+
+        if (mOnLoadMoreListener != null) {
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    totalItemCount = gridLayoutManager.getItemCount();
+                    lastVisibleItem = gridLayoutManager.findLastVisibleItemPosition();
+                    if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                        if (mOnLoadMoreListener != null) {
+                            mOnLoadMoreListener.onLoadMore();
+                        }
+                        isLoading = true;
+                    }
+                }
+            });
+        }
     }
 
     public void setLoaded() {
