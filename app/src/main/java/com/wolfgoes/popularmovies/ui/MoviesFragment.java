@@ -180,7 +180,11 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
     public void initLoader() {
         mMovieAdapter.setOnLoadMoreListener(null, mRecyclerView);
-        getLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+
+        if (getLoaderManager().getLoader(MOVIE_LOADER_ID) == null) {
+            getLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+        }
+
         mEmptyView.setText(getString(R.string.empty_favorite_list_view));
     }
 
