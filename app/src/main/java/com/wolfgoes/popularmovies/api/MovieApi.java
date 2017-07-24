@@ -13,7 +13,7 @@ import retrofit2.http.Query;
 public interface MovieApi {
 
     @GET("movie/{sortBy}")
-    Call<MovieResult> loadMovies(@Path("sortBy") String sortBy, @Query("language") String language);
+    Call<MovieResult> loadMovies(@Path("sortBy") String sortBy, @Query("language") String language, @Query("page") int page);
 
     class MovieResult {
         @SerializedName("results")

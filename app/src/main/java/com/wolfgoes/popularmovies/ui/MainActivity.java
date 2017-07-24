@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
             if (TextUtils.equals(order, getString(R.string.pref_order_favorites))) {
                 mf.initLoader();
             } else if (!TextUtils.equals(order, mOrder) || mOrder == null) {
-                mf.fetchMovieList(order);
+                mf.fetchMovieList(order, 1, true);
             }
         }
         mOrder = order;

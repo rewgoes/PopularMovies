@@ -1,6 +1,4 @@
 <resources>
-    <string name="app_name" translatable="false">Popular Movies</string>
-
     <!-- Refresh action -->
     <string name="menu_action_refresh">Recarregar</string>
 

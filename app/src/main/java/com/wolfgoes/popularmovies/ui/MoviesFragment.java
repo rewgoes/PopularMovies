@@ -4,13 +4,13 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,11 +20,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.api.MovieApi;
 import com.wolfgoes.popularmovies.data.MoviesContract;
+import com.wolfgoes.popularmovies.listener.OnLoadMoreListener;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.network.Controller;
 
@@ -52,6 +54,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     private DynamicSpanRecyclerView mRecyclerView;
     private ArrayList<Movie> mMovies;
     private String mOrder;
+    private boolean mLoadMore = true;
 
     MovieAdapter mMovieAdapter;
 
@@ -99,14 +102,43 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
         mDialog = new ProgressDialog(getContext());
 
-        mMovieAdapter = new MovieAdapter(getContext(), new ArrayList<Movie>());
+        mRecyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
+
+        mMovieAdapter = new MovieAdapter(mRecyclerView, getContext(), new ArrayList<Movie>());
         mEmptyView = (TextView) rootView.findViewById(R.id.empty_list_view);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), GridLayoutManager.DEFAULT_SPAN_COUNT);
-        gridLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        final GridLayoutManager gridLayoutManager = (GridLayoutManager) mRecyclerView.getLayoutManager();
 
-        mRecyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
+        gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                int spanCount = gridLayoutManager.getSpanCount();
+                switch(mMovieAdapter.getItemViewType(position)){
+                    case MovieAdapter.VIEW_TYPE_LOADING:
+                        return spanCount;
+                    default:
+                        return 1;
+                }
+            }
+        });
+
         mRecyclerView.setAdapter(mMovieAdapter);
+
+        //set load more listener for the RecyclerView adapter
+        mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+                if (mLoadMore) {
+                    mMovies.add(null);
+                    mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
+
+                    int page = (mMovies.size() / 20) + 1;
+                    fetchMovieList(mOrder, page);
+                } else {
+                    Toast.makeText(getContext(), "Loading data completed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
         return rootView;
     }
@@ -134,8 +166,18 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         mEmptyView.setText(getString(R.string.empty_favorite_list_view));
     }
 
-    public void fetchMovieList(String order) {
+
+    public void fetchMovieList(String order, int page) {
+        fetchMovieList(order, page, false);
+    }
+
+    public void fetchMovieList(String order, int page, boolean orderChanged) {
         mOrder = order;
+
+        if (orderChanged) {
+            mMovies = null;
+        }
+
         getLoaderManager().destroyLoader(MOVIE_LOADER_ID);
 
         Controller controller = new Controller();
@@ -143,10 +185,10 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
         MovieApi movieApi = retrofit.create(MovieApi.class);
 
-        Call<MovieApi.MovieResult> call = movieApi.loadMovies(order, Locale.getDefault().getLanguage());
+        Call<MovieApi.MovieResult> call = movieApi.loadMovies(order, Locale.getDefault().getLanguage(), page);
         call.enqueue(this);
 
-        if (mDialog != null) {
+        if (mDialog != null && page == 1) {
             mDialog.setMessage(getString(R.string.loading_movies));
             mDialog.show();
         }
@@ -219,7 +261,17 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             MovieApi.MovieResult changesList = response.body();
 
             if (changesList != null) {
-                mMovies = changesList.getMovies();
+                boolean wasEmpty = false;
+                int previousSize = mMovies == null ? 0 : mMovies.size();
+                int receivedMovies = changesList.getMovies().size();
+                if (mMovies == null || mMovies.size() == 0) {
+                    wasEmpty = true;
+                    mMovies = changesList.getMovies();
+                } else {
+                    mMovies.remove(mMovies.size() - 1);
+                    mMovieAdapter.notifyItemRemoved(mMovies.size());
+                    mMovies.addAll(changesList.getMovies());
+                }
 
                 if (mMovies == null)
                     Log.d(LOG_TAG, "Error: no mMovies were fetched");
@@ -227,7 +279,12 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                     if (BuildConfig.DEBUG)
                         Log.d(LOG_TAG, "Number of mMovies fetched: " + mMovies.size());
                     mMovieAdapter.setMovies(mMovies);
-                    mMovieAdapter.notifyDataSetChanged();
+                    if (wasEmpty) {
+                        mMovieAdapter.notifyDataSetChanged();
+                    } else {
+                        mMovieAdapter.notifyItemRangeInserted(previousSize, receivedMovies);
+                        mMovieAdapter.setLoaded();
+                    }
                 }
             }
 

@@ -2,22 +2,35 @@ package com.wolfgoes.popularmovies.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.wolfgoes.popularmovies.R;
+import com.wolfgoes.popularmovies.listener.OnLoadMoreListener;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.utils.Utility;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> {
+// Load more on scroll is based on: http://www.devexchanges.info/2017/02/android-recyclerview-dynamically-load.html
+class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    public static final int VIEW_TYPE_MOVIE = 0;
+    public static final int VIEW_TYPE_LOADING = 1;
+
+    private OnLoadMoreListener mOnLoadMoreListener;
+
+    private boolean isLoading;
+    private int visibleThreshold = 5;
+    private int lastVisibleItem, totalItemCount;
 
     void setMovies(List<Movie> movies) {
         if (movies == null) {
@@ -29,47 +42,99 @@ class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> {
     private List<Movie> mMovies;
     private Context mContext;
 
-    MovieAdapter(Context context, List<Movie> movies) {
+    MovieAdapter(RecyclerView recyclerView, Context context, List<Movie> movies) {
         mMovies = movies;
         mContext = context;
+
+        final GridLayoutManager gridLayoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                totalItemCount = gridLayoutManager.getItemCount();
+                lastVisibleItem = gridLayoutManager.findLastVisibleItemPosition();
+                if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                    if (mOnLoadMoreListener != null) {
+                        mOnLoadMoreListener.onLoadMore();
+                    }
+                    isLoading = true;
+                }
+            }
+        });
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    private static class MovieViewHolder extends RecyclerView.ViewHolder {
 
         ImageView moviePoster;
 
-        ViewHolder(View v) {
+        MovieViewHolder(View v) {
             super(v);
             moviePoster = (ImageView) v.findViewById(R.id.poster);
         }
     }
 
-    @Override
-    public MovieAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(mContext).inflate(R.layout.movie_item, parent, false));
+    private class LoadingViewHolder extends RecyclerView.ViewHolder {
+        private ProgressBar progressBar;
+
+        private LoadingViewHolder(View view) {
+            super(view);
+            progressBar = (ProgressBar) view.findViewById(R.id.loading);
+        }
     }
 
     @Override
-    public void onBindViewHolder(MovieAdapter.ViewHolder holder, int position) {
-        final int adapterPosition = holder.getAdapterPosition();
+    public int getItemViewType(int position) {
+        return mMovies.get(position) == null ? VIEW_TYPE_LOADING : VIEW_TYPE_MOVIE;
+    }
 
-        Glide.with(mContext)
-                .load(Utility.getPosterUrlForMovie(mMovies.get(adapterPosition).getPosterPath(), null))
-                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                .into(holder.moviePoster);
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        if (viewType == VIEW_TYPE_MOVIE) {
+            View view = LayoutInflater.from(mContext).inflate(R.layout.movie_item, parent, false);
+            return new MovieViewHolder(view);
+        } else if (viewType == VIEW_TYPE_LOADING) {
+            View view = LayoutInflater.from(mContext).inflate(R.layout.loading_item, parent, false);
+            return new LoadingViewHolder(view);
+        }
+        return null;
+    }
 
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext, DetailActivity.class)
-                        .putExtra("movie", mMovies.get(adapterPosition));
-                mContext.startActivity(intent);
-            }
-        });
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof MovieViewHolder) {
+            MovieViewHolder movieViewHolder = (MovieViewHolder) holder;
+            final int adapterPosition = movieViewHolder.getAdapterPosition();
+
+            Glide.with(mContext)
+                    .load(Utility.getPosterUrlForMovie(mMovies.get(adapterPosition).getPosterPath(), null))
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .into(movieViewHolder.moviePoster);
+
+            movieViewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext, DetailActivity.class)
+                            .putExtra("movie", mMovies.get(adapterPosition));
+                    mContext.startActivity(intent);
+                }
+            });
+        } else if (holder instanceof LoadingViewHolder) {
+            LoadingViewHolder loadingViewHolder = (LoadingViewHolder) holder;
+            loadingViewHolder.progressBar.setIndeterminate(true);
+        }
     }
 
     @Override
     public int getItemCount() {
-        return mMovies.size();
+        return mMovies == null ? 0 : mMovies.size();
     }
+
+    public void setOnLoadMoreListener(OnLoadMoreListener mOnLoadMoreListener) {
+        this.mOnLoadMoreListener = mOnLoadMoreListener;
+    }
+
+    public void setLoaded() {
+        isLoading = false;
+    }
+
 }
