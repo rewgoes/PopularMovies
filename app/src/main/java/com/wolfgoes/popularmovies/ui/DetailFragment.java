@@ -45,6 +45,7 @@ import com.wolfgoes.popularmovies.utils.Utility;
 import net.opacapp.multilinecollapsingtoolbar.CollapsingToolbarLayout;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -56,8 +57,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
 
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovies";
-    private static final int LOARDER_REVIEW_ID = 1;
-    private static final int LOARDER_VIDEO_ID = 2;
+    private static final int LOADER_REVIEW_ID = 1;
+    private static final int LOADER_VIDEO_ID = 2;
 
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Toolbar mToolbar;
@@ -81,13 +82,15 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private TextView mEmptyVideo;
     private VideoAdapter mVideoAdapter;
 
+    private List<Review> mReviews = new ArrayList<>();
+    private List<Video> mVideos = new ArrayList<>();
+
     public DetailFragment() {
         setHasOptionsMenu(true);
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
@@ -171,7 +174,6 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                                     mBackdropGradient.setVisibility(View.VISIBLE);
                                     backdropView.setImageBitmap(resource);
                                     dynamicToolbarColor(resource);
-
                                 }
                             });
 
@@ -182,21 +184,29 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             }
         }
 
-        setFavorite();
-
-        mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
-
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-
-        Controller controller = new Controller();
-        Retrofit retrofit = controller.getRetrofit();
-
         mReviewAdapter = new ReviewAdapter(getContext(), new ArrayList<Review>());
         mReviewView = (RecyclerView) rootView.findViewById(R.id.reviews);
         mReviewView.setLayoutManager(linearLayoutManager);
         mReviewView.setAdapter(mReviewAdapter);
         mEmptyReview = (TextView) rootView.findViewById(R.id.empty_reviews);
+
+        LinearLayoutManager videoLayoutManager = new LinearLayoutManager(getContext());
+        videoLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+
+        mVideoAdapter = new VideoAdapter(getContext(), new ArrayList<Video>());
+        mVideoView = (RecyclerView) rootView.findViewById(R.id.videos);
+        mVideoView.setLayoutManager(videoLayoutManager);
+        mVideoView.setAdapter(mVideoAdapter);
+        mEmptyVideo = (TextView) rootView.findViewById(R.id.empty_videos);
+
+        checkIsFavorite();
+
+        mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
+
+        Controller controller = new Controller();
+        Retrofit retrofit = controller.getRetrofit();
 
         ReviewApi reviewApi = retrofit.create(ReviewApi.class);
         Call<ReviewApi.ReviewResult> reviewCall = reviewApi.loadReviews(mMovie.getId());
@@ -207,6 +217,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     ReviewApi.ReviewResult reviewResult = response.body();
 
                     if (reviewResult != null && reviewResult.getReviews().size() > 0) {
+                        mReviews = reviewResult.getReviews();
                         mReviewAdapter.setReviews(reviewResult.getReviews());
                         mReviewAdapter.notifyDataSetChanged();
                         showReview(true);
@@ -222,15 +233,6 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             }
         });
 
-        LinearLayoutManager videoLayoutManager = new LinearLayoutManager(getContext());
-        videoLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-
-        mVideoAdapter = new VideoAdapter(getContext(), new ArrayList<Video>());
-        mVideoView = (RecyclerView) rootView.findViewById(R.id.videos);
-        mVideoView.setLayoutManager(videoLayoutManager);
-        mVideoView.setAdapter(mVideoAdapter);
-        mEmptyVideo = (TextView) rootView.findViewById(R.id.empty_videos);
-
         VideoApi videoApi = retrofit.create(VideoApi.class);
         Call<VideoApi.VideoResult> videoCall = videoApi.loadVideos(mMovie.getId());
         videoCall.enqueue(new Callback<VideoApi.VideoResult>() {
@@ -240,7 +242,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     VideoApi.VideoResult videoResult = response.body();
 
                     if (videoResult != null && videoResult.getVideos().size() > 0) {
-                        mVideoAdapter.setVideos(videoResult.getVideos());
+                        mVideos = videoResult.getVideos();
+                        mVideoAdapter.setVideos(mVideos);
                         mVideoAdapter.notifyDataSetChanged();
                         showVideo(true);
                     } else {
@@ -281,6 +284,35 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                 Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
 
                 if (uri != null) {
+                    if (mReviews != null) {
+                        ContentValues[] reviewValues = new ContentValues[mReviews.size()];
+                        int count = 0;
+                        for (Review review : mReviews) {
+                            reviewValues[count] = new ContentValues();
+                            reviewValues[count].put(MoviesContract.ReviewEntry._ID, review.getId());
+                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
+                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID, mMovie.getId());
+                            count++;
+                        }
+                        getContext().getContentResolver().bulkInsert(MoviesContract.ReviewEntry.CONTENT_URI, reviewValues);
+                    }
+
+                    if (mVideos != null) {
+                        ContentValues[] videoValues = new ContentValues[mVideos.size()];
+                        int count = 0;
+                        for (Video video : mVideos) {
+                            videoValues[count] = new ContentValues();
+                            videoValues[count].put(MoviesContract.VideoEntry._ID, video.getId());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_KEY, video.getKey());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_NAME, video.getName());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_SITE, video.getSite());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_MOVIE_ID, mMovie.getId());
+                            count++;
+                        }
+                        getContext().getContentResolver().bulkInsert(MoviesContract.VideoEntry.CONTENT_URI, videoValues);
+                    }
+
                     mIsFavorite = true;
                     mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
                     getActivity().invalidateOptionsMenu();
@@ -294,7 +326,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             @Override
             public void onGenerated(Palette palette) {
                 float[] hsv = new float[3];
-                int color = palette.getVibrantColor(palette.getMutedColor(palette.getDominantColor(R.attr.colorPrimary)));
+                int color = palette.getVibrantColor(palette.getMutedColor(palette.getDominantColor(getResources().getColor(R.color.colorPrimary))));
                 Color.colorToHSV(color, hsv);
                 hsv[2] *= 0.8f; // value component
                 int darkColor = Color.HSVToColor(hsv);
@@ -329,7 +361,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         }
     }
 
-    private void setFavorite() {
+    private void checkIsFavorite() {
         if (mMovie != null) {
             Cursor movie = getContext().getContentResolver().query(
                     MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()),
@@ -342,6 +374,64 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             if (movie != null) {
                 getActivity().invalidateOptionsMenu();
                 mIsFavorite = movie.moveToFirst();
+
+                if (mIsFavorite) {
+                    Cursor reviews = getContext().getContentResolver().query(
+                            MoviesContract.ReviewEntry.buildReviewsFromMovieIdUri(mMovie.getId()),
+                            null,
+                            null,
+                            null,
+                            null
+                    );
+
+                    if (reviews != null && reviews.getCount() > 0) {
+                        while (reviews.moveToNext()) {
+                            Review review = new Review();
+                            review.setId(reviews.getString(reviews.getColumnIndex(MoviesContract.ReviewEntry._ID)));
+                            review.setAuthor(reviews.getString(reviews.getColumnIndex(MoviesContract.ReviewEntry.COLUMN_AUTHOR)));
+                            review.setContent(reviews.getString(reviews.getColumnIndex(MoviesContract.ReviewEntry.COLUMN_CONTENT)));
+                            mReviews.add(review);
+                            mReviewAdapter.setReviews(mReviews);
+                            mReviewAdapter.notifyDataSetChanged();
+                            showReview(true);
+                        }
+                    } else {
+                        showReview(false);
+                    }
+
+                    if (reviews != null) {
+                        reviews.close();
+                    }
+
+                    Cursor videos = getContext().getContentResolver().query(
+                            MoviesContract.VideoEntry.buildVideosFromMovieIdUri(mMovie.getId()),
+                            null,
+                            null,
+                            null,
+                            null
+                    );
+
+                    if (videos != null && videos.getCount() > 0) {
+                        while (videos.moveToNext()) {
+                            Video video = new Video();
+                            video.setId(videos.getString(videos.getColumnIndex(MoviesContract.VideoEntry._ID)));
+                            video.setKey(videos.getString(videos.getColumnIndex(MoviesContract.VideoEntry.COLUMN_KEY)));
+                            video.setName(videos.getString(videos.getColumnIndex(MoviesContract.VideoEntry.COLUMN_NAME)));
+                            video.setSite(videos.getString(videos.getColumnIndex(MoviesContract.VideoEntry.COLUMN_SITE)));
+                            mVideos.add(video);
+                            mVideoAdapter.setVideos(mVideos);
+                            mVideoAdapter.notifyDataSetChanged();
+                            showVideo(true);
+                        }
+                    } else {
+                        showVideo(false);
+                    }
+
+                    if (videos != null) {
+                        videos.close();
+                    }
+                }
+
                 movie.close();
             }
         }
@@ -358,8 +448,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
-            case LOARDER_REVIEW_ID:
+            case LOADER_REVIEW_ID:
                 return new CursorLoader(getContext(), MoviesContract.ReviewEntry.buildReviewsFromMovieIdUri(mMovie.getId()),
+                        null, null, null, null);
+            case LOADER_VIDEO_ID:
+                return new CursorLoader(getContext(), MoviesContract.VideoEntry.buildVideosFromMovieIdUri(mMovie.getId()),
                         null, null, null, null);
             default:
                 throw new IllegalArgumentException();

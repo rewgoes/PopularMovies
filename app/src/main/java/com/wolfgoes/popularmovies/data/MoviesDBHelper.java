@@ -12,7 +12,7 @@ public class MoviesDBHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "movies.db";
 
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 9;
 
     public MoviesDBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -31,18 +31,18 @@ public class MoviesDBHelper extends SQLiteOpenHelper {
 
         final String CREATE_TABLE_REVIEW = "CREATE TABLE " + ReviewEntry.TABLE_NAME + " (" +
                 ReviewEntry._ID + " STRING PRIMARY KEY ON CONFLICT REPLACE, " +
-                MovieEntry.TABLE_NAME + MovieEntry._ID + " INTEGER, " +
+                ReviewEntry.COLUMN_MOVIE_ID + " INTEGER, " +
                 ReviewEntry.COLUMN_AUTHOR + " TEXT, " +
                 ReviewEntry.COLUMN_CONTENT + " TEXT, " +
-                "FOREIGN KEY (" + MovieEntry.TABLE_NAME + MovieEntry._ID + ") REFERENCES " + MovieEntry.TABLE_NAME + "(" + MovieEntry._ID + ") ON DELETE CASCADE);";
+                "FOREIGN KEY (" + ReviewEntry.COLUMN_MOVIE_ID + ") REFERENCES " + MovieEntry.TABLE_NAME + "(" + MovieEntry._ID + ") ON DELETE CASCADE);";
 
         final String CREATE_TABLE_VIDEO = "CREATE TABLE " + VideoEntry.TABLE_NAME + " (" +
                 VideoEntry._ID + " STRING PRIMARY KEY ON CONFLICT REPLACE, " +
-                MovieEntry.TABLE_NAME + MovieEntry._ID + " INTEGER, " +
+                VideoEntry.COLUMN_MOVIE_ID + " INTEGER, " +
                 VideoEntry.COLUMN_NAME + " TEXT, " +
                 VideoEntry.COLUMN_SITE + " TEXT, " +
                 VideoEntry.COLUMN_KEY + " TEXT, " +
-                "FOREIGN KEY (" + MovieEntry.TABLE_NAME + MovieEntry._ID + ") REFERENCES " + MovieEntry.TABLE_NAME + "(" + MovieEntry._ID + ") ON DELETE CASCADE);";
+                "FOREIGN KEY (" + VideoEntry.COLUMN_MOVIE_ID + ") REFERENCES " + MovieEntry.TABLE_NAME + "(" + MovieEntry._ID + ") ON DELETE CASCADE);";
 
         db.execSQL(CREATE_TABLE_MOVIE);
         db.execSQL(CREATE_TABLE_REVIEW);
