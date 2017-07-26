@@ -19,6 +19,7 @@ import android.support.v7.graphics.Palette;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -178,8 +179,12 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                             });
 
                     voteView.setText(Double.toString(vote) + "/10");
-                    overviewView.setText(synopsis);
 
+                    if (!TextUtils.isEmpty(synopsis)) {
+                        overviewView.setText(synopsis);
+                    } else {
+                        overviewView.setText(getString(R.string.description_not_available));
+                    }
                 }
             }
         }
