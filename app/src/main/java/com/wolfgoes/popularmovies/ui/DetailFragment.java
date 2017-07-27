@@ -1,19 +1,27 @@
 package com.wolfgoes.popularmovies.ui;
 
+import android.Manifest;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.LinearLayoutManager;
@@ -28,9 +36,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.wolfgoes.popularmovies.R;
@@ -61,6 +71,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private static final int LOADER_REVIEW_ID = 1;
     private static final int LOADER_VIDEO_ID = 2;
 
+    private static final int REQUEST_STORAGE_PERMISSION = 1;
+
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Toolbar mToolbar;
 
@@ -85,6 +97,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     private List<Review> mReviews = new ArrayList<>();
     private List<Video> mVideos = new ArrayList<>();
+
+    private Bitmap mPoster;
+    private Bitmap mBackdrop;
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -160,23 +175,10 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
                     mCollapsingToolbarLayout.setTitle(title);
                     releaseView.setText(releaseDate);
-                    Glide.with(getContext())
-                            .load(Utility.getPosterUrlForMovie(poster, null))
-                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                            .into(posterView);
 
-                    Glide.with(getContext())
-                            .load(Utility.getPosterUrlForMovie(backdrop, "w1280"))
-                            .asBitmap()
-                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                            .into(new SimpleTarget<Bitmap>() {
-                                @Override
-                                public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                    mBackdropGradient.setVisibility(View.VISIBLE);
-                                    backdropView.setImageBitmap(resource);
-                                    dynamicToolbarColor(resource);
-                                }
-                            });
+                    fetchPoster(poster, posterView);
+
+                    fetchBackdrop(backdrop, backdropView);
 
                     voteView.setText(Double.toString(vote) + "/10");
 
@@ -266,61 +268,147 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         return rootView;
     }
 
+    private void fetchPoster(final String poster, final ImageView posterView) {
+        Glide.with(getContext())
+                .load(Utility.getPosterUrlForMovie(poster, "w500"))
+                .asBitmap()
+                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                .into(new SimpleTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        mPoster = resource;
+                        posterView.setImageBitmap(resource);
+                    }
+
+                    @Override
+                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                        super.onLoadFailed(e, errorDrawable);
+                        fetchPoster(poster, posterView);
+                    }
+                });
+    }
+
+    private void fetchBackdrop(final String backdrop, final ImageView backdropView) {
+        Glide.with(getContext())
+                .load(Utility.getPosterUrlForMovie(backdrop, "w780"))
+                .asBitmap()
+                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                .error(R.drawable.ic_date)
+                .into(new SimpleTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        mBackdrop = resource;
+                        mBackdropGradient.setVisibility(View.VISIBLE);
+                        backdropView.setImageBitmap(resource);
+                        dynamicToolbarColor(resource);
+                    }
+
+                    @Override
+                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                        super.onLoadFailed(e, errorDrawable);
+                        fetchBackdrop(backdrop, backdropView);
+                    }
+                });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Toast.makeText(getContext(), "onRequestPermissionsResult", Toast.LENGTH_SHORT).show();
+        switch (requestCode) {
+            case REQUEST_STORAGE_PERMISSION:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    setFavoriteAction();
+                } else {
+                    AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                            .setMessage("Please, access storage access in order to store images")
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
+                                }
+                            })
+                            .setCancelable(false)
+                            .create();
+
+                    alertDialog.show();
+                }
+                break;
+        }
+    }
+
     private void setFavoriteAction() {
         if (mMovie != null) {
             if (mIsFavorite) {
-                int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
+                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
+                } else {
+                    int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
 
-                if (rows == 1) {
-                    mIsFavorite = false;
-                    mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
-                    getActivity().invalidateOptionsMenu();
+                    if (rows == 1) {
+                        mIsFavorite = false;
+                        mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
+                        getActivity().invalidateOptionsMenu();
+                    }
+
+                    Utility.deleteImages(getContext(), Long.toString(mMovie.getId()));
                 }
             } else {
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
-                contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
-                contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
-                contentValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL, mMovie.getBackdropPath());
-                contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
-                contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
-                contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
+                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
+                } else {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
+                    contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
+                    contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
+                    contentValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL, mMovie.getBackdropPath());
+                    contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
+                    contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
+                    contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
 
-                Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
+                    Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
 
-                if (uri != null) {
-                    if (mReviews != null) {
-                        ContentValues[] reviewValues = new ContentValues[mReviews.size()];
-                        int count = 0;
-                        for (Review review : mReviews) {
-                            reviewValues[count] = new ContentValues();
-                            reviewValues[count].put(MoviesContract.ReviewEntry._ID, review.getId());
-                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
-                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
-                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID, mMovie.getId());
-                            count++;
+                    if (uri != null) {
+                        if (mReviews != null) {
+                            ContentValues[] reviewValues = new ContentValues[mReviews.size()];
+                            int count = 0;
+                            for (Review review : mReviews) {
+                                reviewValues[count] = new ContentValues();
+                                reviewValues[count].put(MoviesContract.ReviewEntry._ID, review.getId());
+                                reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+                                reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
+                                reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID, mMovie.getId());
+                                count++;
+                            }
+                            getContext().getContentResolver().bulkInsert(MoviesContract.ReviewEntry.CONTENT_URI, reviewValues);
                         }
-                        getContext().getContentResolver().bulkInsert(MoviesContract.ReviewEntry.CONTENT_URI, reviewValues);
+
+                        if (mVideos != null) {
+                            ContentValues[] videoValues = new ContentValues[mVideos.size()];
+                            int count = 0;
+                            for (Video video : mVideos) {
+                                videoValues[count] = new ContentValues();
+                                videoValues[count].put(MoviesContract.VideoEntry._ID, video.getId());
+                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_KEY, video.getKey());
+                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_NAME, video.getName());
+                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_SITE, video.getSite());
+                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_MOVIE_ID, mMovie.getId());
+                                count++;
+                            }
+                            getContext().getContentResolver().bulkInsert(MoviesContract.VideoEntry.CONTENT_URI, videoValues);
+                        }
+
+                        mIsFavorite = true;
+                        mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
+                        getActivity().invalidateOptionsMenu();
                     }
 
-                    if (mVideos != null) {
-                        ContentValues[] videoValues = new ContentValues[mVideos.size()];
-                        int count = 0;
-                        for (Video video : mVideos) {
-                            videoValues[count] = new ContentValues();
-                            videoValues[count].put(MoviesContract.VideoEntry._ID, video.getId());
-                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_KEY, video.getKey());
-                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_NAME, video.getName());
-                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_SITE, video.getSite());
-                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_MOVIE_ID, mMovie.getId());
-                            count++;
-                        }
-                        getContext().getContentResolver().bulkInsert(MoviesContract.VideoEntry.CONTENT_URI, videoValues);
+                    if (mPoster != null) {
+                        Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getPosterPath(), mPoster);
                     }
 
-                    mIsFavorite = true;
-                    mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
-                    getActivity().invalidateOptionsMenu();
+                    if (mBackdrop != null) {
+                        Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getBackdropPath(), mBackdrop);
+                    }
                 }
             }
         }
