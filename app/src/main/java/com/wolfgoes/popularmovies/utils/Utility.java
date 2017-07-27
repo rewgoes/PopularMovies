@@ -22,7 +22,7 @@ public final class Utility {
     final static String POSTER_BASE_URL = "http://image.tmdb.org/t/p/";
     final static String VIDEO_BASE_URL = "http://img.youtube.com/vi/%s/mqdefault.jpg";
 
-    final static String FILE_DIRECTORY = "/Android/data/%s/Files/%s";
+    public  final static String FILE_DIRECTORY = "/Android/data/%s/Files/%s";
 
     //Create a non instantiable class
     //http://stackoverflow.com/questions/8848107/how-to-construct-a-non-instantiable-and-non-inheritable-class-in-java

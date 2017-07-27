@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -55,6 +56,7 @@ import com.wolfgoes.popularmovies.utils.Utility;
 
 import net.opacapp.multilinecollapsingtoolbar.CollapsingToolbarLayout;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +64,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+
+import static com.wolfgoes.popularmovies.utils.Utility.FILE_DIRECTORY;
 
 public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -176,10 +180,6 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     mCollapsingToolbarLayout.setTitle(title);
                     releaseView.setText(releaseDate);
 
-                    fetchPoster(poster, posterView);
-
-                    fetchBackdrop(backdrop, backdropView);
-
                     voteView.setText(Double.toString(vote) + "/10");
 
                     if (!TextUtils.isEmpty(synopsis)) {
@@ -187,90 +187,102 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     } else {
                         overviewView.setText(getString(R.string.description_not_available));
                     }
+
+                    LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
+                    linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+                    mReviewAdapter = new ReviewAdapter(getContext(), new ArrayList<Review>());
+                    mReviewView = (RecyclerView) rootView.findViewById(R.id.reviews);
+                    mReviewView.setLayoutManager(linearLayoutManager);
+                    mReviewView.setAdapter(mReviewAdapter);
+                    mEmptyReview = (TextView) rootView.findViewById(R.id.empty_reviews);
+
+                    LinearLayoutManager videoLayoutManager = new LinearLayoutManager(getContext());
+                    videoLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+
+                    mVideoAdapter = new VideoAdapter(getContext(), new ArrayList<Video>());
+                    mVideoView = (RecyclerView) rootView.findViewById(R.id.videos);
+                    mVideoView.setLayoutManager(videoLayoutManager);
+                    mVideoView.setAdapter(mVideoAdapter);
+                    mEmptyVideo = (TextView) rootView.findViewById(R.id.empty_videos);
+
+                    checkIsFavorite();
+
+                    fetchPoster(poster, posterView);
+
+                    fetchBackdrop(backdrop, backdropView);
+
+                    mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
+
+                    Controller controller = new Controller();
+                    Retrofit retrofit = controller.getRetrofit();
+
+                    ReviewApi reviewApi = retrofit.create(ReviewApi.class);
+                    Call<ReviewApi.ReviewResult> reviewCall = reviewApi.loadReviews(mMovie.getId());
+                    reviewCall.enqueue(new Callback<ReviewApi.ReviewResult>() {
+                        @Override
+                        public void onResponse(Call<ReviewApi.ReviewResult> call, Response<ReviewApi.ReviewResult> response) {
+                            if (response.isSuccessful()) {
+                                ReviewApi.ReviewResult reviewResult = response.body();
+
+                                if (reviewResult != null && reviewResult.getReviews().size() > 0) {
+                                    mReviews = reviewResult.getReviews();
+                                    mReviewAdapter.setReviews(reviewResult.getReviews());
+                                    mReviewAdapter.notifyDataSetChanged();
+                                    showReview(true);
+                                } else {
+                                    showReview(false);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ReviewApi.ReviewResult> call, Throwable t) {
+
+                        }
+                    });
+
+                    VideoApi videoApi = retrofit.create(VideoApi.class);
+                    Call<VideoApi.VideoResult> videoCall = videoApi.loadVideos(mMovie.getId());
+                    videoCall.enqueue(new Callback<VideoApi.VideoResult>() {
+                        @Override
+                        public void onResponse(Call<VideoApi.VideoResult> call, Response<VideoApi.VideoResult> response) {
+                            if (response.isSuccessful()) {
+                                VideoApi.VideoResult videoResult = response.body();
+
+                                if (videoResult != null && videoResult.getVideos().size() > 0) {
+                                    mVideos = videoResult.getVideos();
+                                    mVideoAdapter.setVideos(mVideos);
+                                    mVideoAdapter.notifyDataSetChanged();
+                                    showVideo(true);
+                                } else {
+                                    showVideo(false);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<VideoApi.VideoResult> call, Throwable t) {
+
+                        }
+                    });
                 }
             }
         }
-
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
-        linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-        mReviewAdapter = new ReviewAdapter(getContext(), new ArrayList<Review>());
-        mReviewView = (RecyclerView) rootView.findViewById(R.id.reviews);
-        mReviewView.setLayoutManager(linearLayoutManager);
-        mReviewView.setAdapter(mReviewAdapter);
-        mEmptyReview = (TextView) rootView.findViewById(R.id.empty_reviews);
-
-        LinearLayoutManager videoLayoutManager = new LinearLayoutManager(getContext());
-        videoLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-
-        mVideoAdapter = new VideoAdapter(getContext(), new ArrayList<Video>());
-        mVideoView = (RecyclerView) rootView.findViewById(R.id.videos);
-        mVideoView.setLayoutManager(videoLayoutManager);
-        mVideoView.setAdapter(mVideoAdapter);
-        mEmptyVideo = (TextView) rootView.findViewById(R.id.empty_videos);
-
-        checkIsFavorite();
-
-        mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
-
-        Controller controller = new Controller();
-        Retrofit retrofit = controller.getRetrofit();
-
-        ReviewApi reviewApi = retrofit.create(ReviewApi.class);
-        Call<ReviewApi.ReviewResult> reviewCall = reviewApi.loadReviews(mMovie.getId());
-        reviewCall.enqueue(new Callback<ReviewApi.ReviewResult>() {
-            @Override
-            public void onResponse(Call<ReviewApi.ReviewResult> call, Response<ReviewApi.ReviewResult> response) {
-                if (response.isSuccessful()) {
-                    ReviewApi.ReviewResult reviewResult = response.body();
-
-                    if (reviewResult != null && reviewResult.getReviews().size() > 0) {
-                        mReviews = reviewResult.getReviews();
-                        mReviewAdapter.setReviews(reviewResult.getReviews());
-                        mReviewAdapter.notifyDataSetChanged();
-                        showReview(true);
-                    } else {
-                        showReview(false);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ReviewApi.ReviewResult> call, Throwable t) {
-
-            }
-        });
-
-        VideoApi videoApi = retrofit.create(VideoApi.class);
-        Call<VideoApi.VideoResult> videoCall = videoApi.loadVideos(mMovie.getId());
-        videoCall.enqueue(new Callback<VideoApi.VideoResult>() {
-            @Override
-            public void onResponse(Call<VideoApi.VideoResult> call, Response<VideoApi.VideoResult> response) {
-                if (response.isSuccessful()) {
-                    VideoApi.VideoResult videoResult = response.body();
-
-                    if (videoResult != null && videoResult.getVideos().size() > 0) {
-                        mVideos = videoResult.getVideos();
-                        mVideoAdapter.setVideos(mVideos);
-                        mVideoAdapter.notifyDataSetChanged();
-                        showVideo(true);
-                    } else {
-                        showVideo(false);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<VideoApi.VideoResult> call, Throwable t) {
-
-            }
-        });
 
         return rootView;
     }
 
     private void fetchPoster(final String poster, final ImageView posterView) {
+        Uri posterPath;
+        if (mIsFavorite) {
+            posterPath = Uri.fromFile(new File(Environment.getExternalStorageDirectory() +
+                    String.format(FILE_DIRECTORY, getContext().getApplicationContext().getPackageName(), mMovie.getId()) + poster));
+        } else {
+            posterPath = Uri.parse(Utility.getPosterUrlForMovie(poster, "w500"));
+        }
+
         Glide.with(getContext())
-                .load(Utility.getPosterUrlForMovie(poster, "w500"))
+                .load(posterPath)
                 .asBitmap()
                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                 .into(new SimpleTarget<Bitmap>() {
@@ -283,14 +295,23 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     @Override
                     public void onLoadFailed(Exception e, Drawable errorDrawable) {
                         super.onLoadFailed(e, errorDrawable);
+
                         fetchPoster(poster, posterView);
                     }
                 });
     }
 
     private void fetchBackdrop(final String backdrop, final ImageView backdropView) {
+        Uri backdropPath;
+        if (mIsFavorite) {
+            backdropPath = Uri.fromFile(new File(Environment.getExternalStorageDirectory() +
+                    String.format(FILE_DIRECTORY, getContext().getApplicationContext().getPackageName(), mMovie.getId()) + backdrop));
+        } else {
+            backdropPath = Uri.parse(Utility.getPosterUrlForMovie(backdrop, "w780"));
+        }
+
         Glide.with(getContext())
-                .load(Utility.getPosterUrlForMovie(backdrop, "w780"))
+                .load(backdropPath)
                 .asBitmap()
                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                 .error(R.drawable.ic_date)
