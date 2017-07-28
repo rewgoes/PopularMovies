@@ -1,5 +1,7 @@
 package com.wolfgoes.popularmovies.utils;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -7,6 +9,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 
 import com.wolfgoes.popularmovies.R;
 
@@ -97,6 +100,23 @@ public final class Utility {
             }
         }
         mediaStorageDir.delete();
+    }
+
+    public static void animateView(final View view, final int toVisibility, float toAlpha, int duration) {
+        boolean show = toVisibility == View.VISIBLE;
+        if (show) {
+            view.setAlpha(0);
+        }
+        view.setVisibility(View.VISIBLE);
+        view.animate()
+                .setDuration(duration)
+                .alpha(show ? toAlpha : 0)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        view.setVisibility(toVisibility);
+                    }
+                });
     }
 
 }

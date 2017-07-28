@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -37,11 +38,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.wolfgoes.popularmovies.R;
@@ -105,6 +104,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private Bitmap mPoster;
     private Bitmap mBackdrop;
 
+    private View mProgressOverlay;
+
     public DetailFragment() {
         setHasOptionsMenu(true);
     }
@@ -116,6 +117,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         mToolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+
+        mProgressOverlay = rootView.findViewById(R.id.progress_overlay);
 
         mAppBar = (AppBarLayout) rootView.findViewById(R.id.app_bar);
 
@@ -334,7 +337,6 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Toast.makeText(getContext(), "onRequestPermissionsResult", Toast.LENGTH_SHORT).show();
         switch (requestCode) {
             case REQUEST_STORAGE_PERMISSION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -359,78 +361,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     private void setFavoriteAction() {
         if (mMovie != null) {
-            if (mIsFavorite) {
-                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
-                } else {
-                    int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
-
-                    if (rows == 1) {
-                        mIsFavorite = false;
-                        mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
-                        getActivity().invalidateOptionsMenu();
-                    }
-
-                    Utility.deleteImages(getContext(), Long.toString(mMovie.getId()));
-                }
+            if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
             } else {
-                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
-                } else {
-                    ContentValues contentValues = new ContentValues();
-                    contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL, mMovie.getBackdropPath());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
-                    contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
-
-                    Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
-
-                    if (uri != null) {
-                        if (mReviews != null) {
-                            ContentValues[] reviewValues = new ContentValues[mReviews.size()];
-                            int count = 0;
-                            for (Review review : mReviews) {
-                                reviewValues[count] = new ContentValues();
-                                reviewValues[count].put(MoviesContract.ReviewEntry._ID, review.getId());
-                                reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
-                                reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
-                                reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID, mMovie.getId());
-                                count++;
-                            }
-                            getContext().getContentResolver().bulkInsert(MoviesContract.ReviewEntry.CONTENT_URI, reviewValues);
-                        }
-
-                        if (mVideos != null) {
-                            ContentValues[] videoValues = new ContentValues[mVideos.size()];
-                            int count = 0;
-                            for (Video video : mVideos) {
-                                videoValues[count] = new ContentValues();
-                                videoValues[count].put(MoviesContract.VideoEntry._ID, video.getId());
-                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_KEY, video.getKey());
-                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_NAME, video.getName());
-                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_SITE, video.getSite());
-                                videoValues[count].put(MoviesContract.VideoEntry.COLUMN_MOVIE_ID, mMovie.getId());
-                                count++;
-                            }
-                            getContext().getContentResolver().bulkInsert(MoviesContract.VideoEntry.CONTENT_URI, videoValues);
-                        }
-
-                        mIsFavorite = true;
-                        mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
-                        getActivity().invalidateOptionsMenu();
-                    }
-
-                    if (mPoster != null) {
-                        Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getPosterPath(), mPoster);
-                    }
-
-                    if (mBackdrop != null) {
-                        Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getBackdropPath(), mBackdrop);
-                    }
-                }
+                StoreAsyncTask storeAsyncTask = new StoreAsyncTask();
+                storeAsyncTask.execute();
             }
         }
     }
@@ -591,5 +526,96 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private void showVideo(boolean show) {
         mVideoView.setVisibility(show ? View.VISIBLE : View.GONE);
         mEmptyVideo.setVisibility(show ? View.GONE : View.VISIBLE);
+    }
+
+    class StoreAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Utility.animateView(mProgressOverlay, View.VISIBLE, 0.4f, 200);
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if (mIsFavorite) {
+                int rows = getContext().getContentResolver().delete(MoviesContract.MovieEntry.buildMovieWithIdUri(mMovie.getId()), null, null);
+
+                if (rows == 1) {
+                    mIsFavorite = false;
+                    getActivity().invalidateOptionsMenu();
+                }
+
+                Utility.deleteImages(getContext(), Long.toString(mMovie.getId()));
+            } else {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MoviesContract.MovieEntry._ID, mMovie.getId());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URL, mMovie.getPosterPath());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL, mMovie.getBackdropPath());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_SYNOPSIS, mMovie.getSynopsis());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_RATING, mMovie.getVoteAverage());
+                contentValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE, mMovie.getReleaseDate());
+
+                Uri uri = getContext().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, contentValues);
+
+                if (uri != null) {
+                    if (mReviews != null) {
+                        ContentValues[] reviewValues = new ContentValues[mReviews.size()];
+                        int count = 0;
+                        for (Review review : mReviews) {
+                            reviewValues[count] = new ContentValues();
+                            reviewValues[count].put(MoviesContract.ReviewEntry._ID, review.getId());
+                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
+                            reviewValues[count].put(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID, mMovie.getId());
+                            count++;
+                        }
+                        getContext().getContentResolver().bulkInsert(MoviesContract.ReviewEntry.CONTENT_URI, reviewValues);
+                    }
+
+                    if (mVideos != null) {
+                        ContentValues[] videoValues = new ContentValues[mVideos.size()];
+                        int count = 0;
+                        for (Video video : mVideos) {
+                            videoValues[count] = new ContentValues();
+                            videoValues[count].put(MoviesContract.VideoEntry._ID, video.getId());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_KEY, video.getKey());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_NAME, video.getName());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_SITE, video.getSite());
+                            videoValues[count].put(MoviesContract.VideoEntry.COLUMN_MOVIE_ID, mMovie.getId());
+                            count++;
+                        }
+                        getContext().getContentResolver().bulkInsert(MoviesContract.VideoEntry.CONTENT_URI, videoValues);
+                    }
+
+                    mIsFavorite = true;
+                    getActivity().invalidateOptionsMenu();
+                }
+
+                if (mPoster != null) {
+                    Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getPosterPath(), mPoster);
+                }
+
+                if (mBackdrop != null) {
+                    Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getBackdropPath(), mBackdrop);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            if (mIsFavorite) {
+                mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
+            } else {
+                mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
+            }
+
+            Utility.animateView(mProgressOverlay, View.GONE, 0, 200);
+        }
+
     }
 }
