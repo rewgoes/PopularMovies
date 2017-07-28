@@ -2,6 +2,8 @@ package com.wolfgoes.popularmovies.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Environment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -17,8 +19,11 @@ import com.wolfgoes.popularmovies.listener.OnLoadMoreListener;
 import com.wolfgoes.popularmovies.model.Movie;
 import com.wolfgoes.popularmovies.utils.Utility;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.wolfgoes.popularmovies.utils.Utility.FILE_DIRECTORY;
 
 // Load more on scroll is based on: http://www.devexchanges.info/2017/02/android-recyclerview-dynamically-load.html
 class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -31,6 +36,7 @@ class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private boolean isLoading;
     private int visibleThreshold = 5;
     private int lastVisibleItem, totalItemCount;
+    private boolean mFavorite;
 
     void setMovies(List<Movie> movies) {
         if (movies == null) {
@@ -45,6 +51,10 @@ class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     MovieAdapter(Context context, List<Movie> movies) {
         mMovies = movies;
         mContext = context;
+    }
+
+    public void setFavorite(boolean favorite) {
+        mFavorite = favorite;
     }
 
     private static class MovieViewHolder extends RecyclerView.ViewHolder {
@@ -88,9 +98,18 @@ class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder instanceof MovieViewHolder) {
             MovieViewHolder movieViewHolder = (MovieViewHolder) holder;
             final int adapterPosition = movieViewHolder.getAdapterPosition();
+            Movie movie = mMovies.get(adapterPosition);
+
+            Uri posterPath;
+            if (mFavorite) {
+                posterPath = Uri.fromFile(new File(Environment.getExternalStorageDirectory() +
+                        String.format(FILE_DIRECTORY, mContext.getApplicationContext().getPackageName(), movie.getId()) + movie.getPosterPath()));
+            } else {
+                posterPath = Uri.parse(Utility.getPosterUrlForMovie(movie.getPosterPath(), null));
+            }
 
             Glide.with(mContext)
-                    .load(Utility.getPosterUrlForMovie(mMovies.get(adapterPosition).getPosterPath(), null))
+                    .load(posterPath)
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .into(movieViewHolder.moviePoster);
 

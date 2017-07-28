@@ -145,6 +145,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             if (TextUtils.equals(mOrder, getString(R.string.pref_order_favorites))) {
                 initLoader();
             } else {
+                mMovieAdapter.setFavorite(false);
                 if (!TextUtils.isEmpty(mOrder)) {
                     //set load more listener for the RecyclerView adapter
                     mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
@@ -258,6 +259,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        mMovieAdapter.setFavorite(true);
         mMovies = new ArrayList<>();
 
         if (data != null) {
