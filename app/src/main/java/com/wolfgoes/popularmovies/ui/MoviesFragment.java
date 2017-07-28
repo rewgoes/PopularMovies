@@ -101,6 +101,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
         mDialog = new ProgressDialog(getContext());
+        mDialog.setCancelable(false);
 
         mRecyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
 
@@ -145,7 +146,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             if (TextUtils.equals(mOrder, getString(R.string.pref_order_favorites))) {
                 initLoader();
             } else {
-                mMovieAdapter.setFavorite(false);
                 if (!TextUtils.isEmpty(mOrder)) {
                     //set load more listener for the RecyclerView adapter
                     mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
@@ -198,29 +198,35 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         mOrder = order;
 
         if (orderChanged) {
-            mMovies = new ArrayList<>();
+            synchronized (lock) {
+                mMovieAdapter.setLoaded();
+                mMovieAdapter.setFavorite(false);
+                mMovies = new ArrayList<>();
 
-            mMovieAdapter.setMovies(mMovies);
-            mMovieAdapter.notifyDataSetChanged();
+                mMovieAdapter.setMovies(mMovies);
+                mMovieAdapter.notifyDataSetChanged();
+            }
 
             //set load more listener for the RecyclerView adapter
             mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
                 @Override
                 public void onLoadMore() {
-                    if (mLoadMore) {
-                        if (mMovies != null) {
-                            mRecyclerView.post(new Runnable() {
-                                public void run() {
-                                    mMovies.add(null);
-                                    mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
+                    synchronized (lock) {
+                        if (mLoadMore) {
+                            if (mMovies != null && mMovies.size() > 0) {
+                                mRecyclerView.post(new Runnable() {
+                                    public void run() {
+                                        mMovies.add(null);
+                                        mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
 
-                                    int page = (mMovies.size() / 20) + 1;
-                                    fetchMovieList(mOrder, page);
-                                }
-                            });
+                                        int page = (mMovies.size() / 20) + 1;
+                                        fetchMovieList(mOrder, page);
+                                    }
+                                });
+                            }
+                        } else {
+                            Toast.makeText(getContext(), getString(R.string.no_more_movies), Toast.LENGTH_SHORT).show();
                         }
-                    } else {
-                        Toast.makeText(getContext(), getString(R.string.no_more_movies), Toast.LENGTH_SHORT).show();
                     }
                 }
             }, mRecyclerView);
@@ -303,7 +309,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         if (response.isSuccessful()) {
             addMovie(response.body());
         } else {
-            if (mMovies != null && mMovies.size() > 0) {
+            if (mMovies != null) {
                 if (mMovies.get(mMovies.size() - 1) == null){
                     mMovies.remove(mMovies.size() - 1);
                     mMovieAdapter.notifyItemChanged(mMovies.size());

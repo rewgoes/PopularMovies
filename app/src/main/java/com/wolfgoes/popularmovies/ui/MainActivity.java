@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         if ( null != mf ) {
             if (TextUtils.equals(order, getString(R.string.pref_order_favorites))) {
                 mf.initLoader();
-            } else if (!TextUtils.equals(order, mOrder) || mOrder == null) {
+            } else if (!TextUtils.equals(order, mOrder)) {
                 mf.fetchMovieList(order, 1, true);
             }
         }

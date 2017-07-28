@@ -145,7 +145,7 @@ class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     super.onScrolled(recyclerView, dx, dy);
                     totalItemCount = gridLayoutManager.getItemCount();
                     lastVisibleItem = gridLayoutManager.findLastVisibleItemPosition();
-                    if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                    if (!isLoading && totalItemCount > 0 && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                         if (mOnLoadMoreListener != null) {
                             mOnLoadMoreListener.onLoadMore();
                         }
