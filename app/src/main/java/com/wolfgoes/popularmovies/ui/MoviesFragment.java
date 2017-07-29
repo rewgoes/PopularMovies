@@ -157,7 +157,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                                         mRecyclerView.post(new Runnable() {
                                             public void run() {
                                                 mMovies.add(null);
-                                                mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
+                                                mMovieAdapter.notifyItemInserted(mMovies.size());
 
                                                 int page = (mMovies.size() / 20) + 1;
                                                 fetchMovieList(mOrder, page);
@@ -217,7 +217,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                                 mRecyclerView.post(new Runnable() {
                                     public void run() {
                                         mMovies.add(null);
-                                        mMovieAdapter.notifyItemInserted(mMovies.size() - 1);
+                                        mMovieAdapter.notifyItemInserted(mMovies.size());
 
                                         int page = (mMovies.size() / 20) + 1;
                                         fetchMovieList(mOrder, page);
@@ -339,30 +339,17 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             dismissProgressDialog();
 
             if (changesList != null) {
-                boolean wasEmpty = false;
-                int previousSize = mMovies == null ? 0 : mMovies.size();
+                int previousSize = mMovies == null ? 0 : mMovies.size() - 1;
                 int receivedMovies = changesList.getMovies().size();
                 if (mMovies == null || mMovies.size() == 0) {
-                    wasEmpty = true;
                     mMovies = changesList.getMovies();
+                    mMovieAdapter.setMovies(mMovies);
+                    mMovieAdapter.notifyDataSetChanged();
                 } else {
                     mMovies.remove(mMovies.size() - 1);
-                    mMovieAdapter.notifyItemRemoved(mMovies.size());
                     mMovies.addAll(changesList.getMovies());
-                }
-
-                if (mMovies == null)
-                    Log.d(LOG_TAG, "Error: no mMovies were fetched");
-                else {
-                    if (BuildConfig.DEBUG)
-                        Log.d(LOG_TAG, "Number of mMovies fetched: " + mMovies.size());
-                    mMovieAdapter.setMovies(mMovies);
-                    if (wasEmpty) {
-                        mMovieAdapter.notifyDataSetChanged();
-                    } else {
-                        mMovieAdapter.notifyItemRangeInserted(previousSize, receivedMovies);
-                        mMovieAdapter.setLoaded();
-                    }
+                    mMovieAdapter.notifyItemRangeChanged(previousSize, receivedMovies);
+                    mMovieAdapter.setLoaded();
                 }
             }
         }
