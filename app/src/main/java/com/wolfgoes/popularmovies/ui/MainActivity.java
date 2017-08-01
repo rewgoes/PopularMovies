@@ -1,5 +1,6 @@
 package com.wolfgoes.popularmovies.ui;
 
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -7,11 +8,14 @@ import android.text.TextUtils;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.utils.Utility;
 
+import java.util.HashMap;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String STATE_MOVIE_ORDER = "extra_movie_order";
 
     private String mOrder;
+    private RetainedFragment retainedFragment;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -27,6 +31,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_main);
+
+        retainedFragment = (RetainedFragment) getSupportFragmentManager().findFragmentByTag("retained_fragment");
+
+        if (retainedFragment == null) {
+            retainedFragment = new RetainedFragment();
+            getSupportFragmentManager().beginTransaction().add(retainedFragment, "retained_fragment").commit();
+        }
 
         if (findViewById(R.id.fragment_container) != null) {
             MoviesFragment moviesFragment = new MoviesFragment();
@@ -54,5 +65,25 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         mOrder = order;
+    }
+
+    public <T> T getState(String key) {
+        //noinspection unchecked
+        return (T) retainedFragment.map.get(key);
+    }
+
+    public void saveState(String key, Object value) {
+        retainedFragment.map.put(key, value);
+    }
+
+    public static class RetainedFragment extends Fragment {
+
+        HashMap<String, Object> map = new HashMap<>();
+
+        @Override public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setRetainInstance(true);
+        }
+
     }
 }

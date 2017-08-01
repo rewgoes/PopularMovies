@@ -21,7 +21,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
 import com.wolfgoes.popularmovies.api.MovieApi;
 import com.wolfgoes.popularmovies.data.MoviesContract;
@@ -90,7 +89,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList(STATE_MOVIE_LIST, mMovies);
+        ((MainActivity) getActivity()).saveState(STATE_MOVIE_LIST, mMovies);
         outState.putString(STATE_MOVIE_ORDER, mOrder);
     }
 
@@ -133,7 +132,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         super.onViewCreated(view, savedInstanceState);
 
         if (savedInstanceState != null) {
-            mMovies = savedInstanceState.getParcelableArrayList(STATE_MOVIE_LIST);
+            mMovies = ((MainActivity) getActivity()).getState(STATE_MOVIE_LIST);
 
             synchronized (lock) {
                 if (mMovies != null && mMovies.size() > 0 && mMovies.get(mMovies.size() - 1) == null) {
