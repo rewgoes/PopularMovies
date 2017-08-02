@@ -70,6 +70,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     private static final String LOG_TAG = DetailFragment.class.getSimpleName();
 
+    private static final String POSTER_FILE_NAME = "/poster.jpg";
+    private static final String BACKDROP_FILE_NAME = "/backdrop.jpg";
+
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovies";
     private static final int LOADER_REVIEW_ID = 1;
     private static final int LOADER_VIDEO_ID = 2;
@@ -116,28 +119,33 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
         mToolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
-        ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+
+        if (mToolbar != null) {
+            ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+        }
 
         mProgressOverlay = rootView.findViewById(R.id.progress_overlay);
 
         mAppBar = (AppBarLayout) rootView.findViewById(R.id.app_bar);
 
-        mAppBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if (!mIsCollapsed && mCollapsingToolbarLayout.getScrimVisibleHeightTrigger() - mAppBar.getMeasuredHeight() >= verticalOffset) {
-                    mIsCollapsed = true;
-                    if (mMenuFavorite != null) {
-                        getActivity().invalidateOptionsMenu();
-                    }
-                } else if (mIsCollapsed && mCollapsingToolbarLayout.getScrimVisibleHeightTrigger() - mAppBar.getMeasuredHeight() < verticalOffset) {
-                    mIsCollapsed = false;
-                    if (mMenuFavorite != null) {
-                        getActivity().invalidateOptionsMenu();
+        if (mAppBar != null) {
+            mAppBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+                @Override
+                public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                    if (!mIsCollapsed && mCollapsingToolbarLayout.getScrimVisibleHeightTrigger() - mAppBar.getMeasuredHeight() >= verticalOffset) {
+                        mIsCollapsed = true;
+                        if (mMenuFavorite != null) {
+                            getActivity().invalidateOptionsMenu();
+                        }
+                    } else if (mIsCollapsed && mCollapsingToolbarLayout.getScrimVisibleHeightTrigger() - mAppBar.getMeasuredHeight() < verticalOffset) {
+                        mIsCollapsed = false;
+                        if (mMenuFavorite != null) {
+                            getActivity().invalidateOptionsMenu();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         mBackdropGradient = rootView.findViewById(R.id.backdrop_gradient);
 
@@ -150,12 +158,14 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         mFavoriteButton = (FloatingActionButton) rootView.findViewById(R.id.favorite);
 
-        mFavoriteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setFavoriteAction();
-            }
-        });
+        if (mFavoriteButton != null) {
+            mFavoriteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setFavoriteAction();
+                }
+            });
+        }
 
         Intent intent = getActivity().getIntent();
         if (intent != null) {
@@ -180,7 +190,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     //Set values to the views
                     mMovieStr = title;
 
-                    mCollapsingToolbarLayout.setTitle(title);
+                    if (mCollapsingToolbarLayout != null) {
+                        mCollapsingToolbarLayout.setTitle(title);
+                    }
                     releaseView.setText(releaseDate);
 
                     voteView.setText(Double.toString(vote) + "/10");
@@ -189,6 +201,10 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                         overviewView.setText(synopsis);
                     } else {
                         overviewView.setText(getString(R.string.description_not_available));
+                    }
+
+                    if (mToolbar == null) {
+                        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(mMovie.getTitle());
                     }
 
                     LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
@@ -214,7 +230,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
                     fetchBackdrop(backdrop, backdropView);
 
-                    mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
+                    if (mFavoriteButton != null) {
+                        mFavoriteButton.setImageResource(mIsFavorite ? R.drawable.ic_favorite_true : R.drawable.ic_favorite_false);
+                    }
 
                     Controller controller = new Controller();
                     Retrofit retrofit = controller.getRetrofit();
@@ -279,7 +297,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         Uri posterPath;
         if (mIsFavorite) {
             posterPath = Uri.fromFile(new File(Environment.getExternalStorageDirectory() +
-                    String.format(FILE_DIRECTORY, getContext().getApplicationContext().getPackageName(), mMovie.getId()) + poster));
+                    String.format(FILE_DIRECTORY, getContext().getApplicationContext().getPackageName(), mMovie.getId()) + POSTER_FILE_NAME));
         } else {
             posterPath = Uri.parse(Utility.getPosterUrlForMovie(poster, "w500"));
         }
@@ -308,7 +326,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         Uri backdropPath;
         if (mIsFavorite) {
             backdropPath = Uri.fromFile(new File(Environment.getExternalStorageDirectory() +
-                    String.format(FILE_DIRECTORY, getContext().getApplicationContext().getPackageName(), mMovie.getId()) + backdrop));
+                    String.format(FILE_DIRECTORY, getContext().getApplicationContext().getPackageName(), mMovie.getId()) + BACKDROP_FILE_NAME));
         } else {
             backdropPath = Uri.parse(Utility.getPosterUrlForMovie(backdrop, "w780"));
         }
@@ -321,10 +339,12 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                        mBackdrop = resource;
-                        mBackdropGradient.setVisibility(View.VISIBLE);
-                        backdropView.setImageBitmap(resource);
-                        dynamicToolbarColor(resource);
+                        if (mBackdropGradient != null) {
+                            mBackdrop = resource;
+                            mBackdropGradient.setVisibility(View.VISIBLE);
+                            backdropView.setImageBitmap(resource);
+                            dynamicToolbarColor(resource);
+                        }
                     }
 
                     @Override
@@ -343,6 +363,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     setFavoriteAction();
                 } else {
                     AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                            .setTitle("Permission")
                             .setMessage("Please, access storage access in order to store images")
                             .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                 @Override
@@ -380,8 +401,10 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                 hsv[2] *= 0.8f; // value component
                 int darkColor = Color.HSVToColor(hsv);
 
-                mCollapsingToolbarLayout.setContentScrimColor(color);
-                mCollapsingToolbarLayout.setStatusBarScrimColor(darkColor);
+                if (mCollapsingToolbarLayout != null) {
+                    mCollapsingToolbarLayout.setContentScrimColor(color);
+                    mCollapsingToolbarLayout.setStatusBarScrimColor(darkColor);
+                }
             }
         });
     }
@@ -594,11 +617,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                 }
 
                 if (mPoster != null) {
-                    Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getPosterPath(), mPoster);
+                    Utility.storeImage(getContext(), Long.toString(mMovie.getId()), POSTER_FILE_NAME, mPoster);
                 }
 
                 if (mBackdrop != null) {
-                    Utility.storeImage(getContext(), Long.toString(mMovie.getId()), mMovie.getBackdropPath(), mBackdrop);
+                    Utility.storeImage(getContext(), Long.toString(mMovie.getId()), BACKDROP_FILE_NAME, mBackdrop);
                 }
             }
             return null;
@@ -608,10 +631,12 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
 
-            if (mIsFavorite) {
-                mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
-            } else {
-                mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
+            if (mFavoriteButton != null) {
+                if (mIsFavorite) {
+                    mFavoriteButton.setImageResource(R.drawable.ic_favorite_true);
+                } else {
+                    mFavoriteButton.setImageResource(R.drawable.ic_favorite_false);
+                }
             }
 
             Utility.animateView(mProgressOverlay, View.GONE, 0, 200);
