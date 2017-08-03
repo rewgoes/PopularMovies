@@ -13,6 +13,7 @@ import java.util.HashMap;
 public class MainActivity extends AppCompatActivity {
 
     private static final String STATE_MOVIE_ORDER = "extra_movie_order";
+    public static final String RETAINED_FRAGMENT = "retained_fragment";
 
     private String mOrder;
     private RetainedFragment retainedFragment;
@@ -32,11 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        retainedFragment = (RetainedFragment) getSupportFragmentManager().findFragmentByTag("retained_fragment");
+        retainedFragment = (RetainedFragment) getSupportFragmentManager().findFragmentByTag(RETAINED_FRAGMENT);
 
         if (retainedFragment == null) {
             retainedFragment = new RetainedFragment();
-            getSupportFragmentManager().beginTransaction().add(retainedFragment, "retained_fragment").commit();
+            getSupportFragmentManager().beginTransaction().add(retainedFragment, RETAINED_FRAGMENT).commit();
         }
 
         if (findViewById(R.id.fragment_container) != null) {

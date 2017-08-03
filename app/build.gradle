@@ -31,8 +31,6 @@ android {
     }
 }
 
-//TODO: https://inthecheesefactory.com/blog/get-to-know-glide-recommended-by-google/en
-//TODO: Set glide to ARGB_8888
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:25.3.1'

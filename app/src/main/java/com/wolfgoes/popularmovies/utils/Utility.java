@@ -35,7 +35,6 @@ public final class Utility {
 
     public static String getPosterUrlForMovie(String posterName, String size) {
 
-        //TODO: check size possibilities later
         if (TextUtils.isEmpty(size)) {
             size = "w185";
         }

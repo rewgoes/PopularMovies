@@ -9,7 +9,6 @@ public class Movie implements Parcelable {
 
     @SerializedName("id")
     private long mId;
-    // TODO: check if original_title or title should be fetched.
     @SerializedName("title")
     private String mTitle;
     @SerializedName("release_date")

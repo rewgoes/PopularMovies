@@ -25,5 +25,14 @@
     <string name="loading_movies">Carregando Filmes</string>
     <string name="empty_list_view">Houve um problema ao carregar os filmes</string>
     <string name="empty_favorite_list_view">Lista de favoritos está vazia</string>
+    <string name="menu_action_favorite">Favorito</string>
+    <string name="reviews">Comentários</string>
+    <string name="videos">Vídeos</string>
+    <string name="no_more_movies">Fim da lista</string>
+    <string name="no_video_available">Não há vídeos disponíveis</string>
+    <string name="no_review_available">Não há comentários disponíveis</string>
+    <string name="ok">Ok</string>
+    <string name="permission">Permissão</string>
+    <string name="permission_message">Por favor, permita acesso ao armazenamento para armazenar imagens.</string>
 
 </resources>

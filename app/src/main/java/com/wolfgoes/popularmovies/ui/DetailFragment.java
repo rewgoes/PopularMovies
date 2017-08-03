@@ -363,9 +363,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     setFavoriteAction();
                 } else {
                     AlertDialog alertDialog = new AlertDialog.Builder(getContext())
-                            .setTitle("Permission")
-                            .setMessage("Please, access storage access in order to store images")
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            .setTitle(R.string.permission)
+                            .setMessage(R.string.permission_message)
+                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
@@ -514,7 +514,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         textShareIntent.setType("text/plain");
         textShareIntent.putExtra(Intent.EXTRA_TEXT, mMovieStr + MOVIE_SHARE_HASHTAG);
         if (textShareIntent.resolveActivity(getActivity().getPackageManager()) != null)
-            startActivity(Intent.createChooser(textShareIntent, "Share"));
+            startActivity(Intent.createChooser(textShareIntent, getString(R.string.menu_action_share)));
     }
 
     @Override

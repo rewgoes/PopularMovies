@@ -37,5 +37,8 @@
     <string name="no_review_available">No review available</string>
     <string name="no_video_available">No video available</string>
     <string name="no_more_movies">No more movies</string>
+    <string name="permission">Permission</string>
+    <string name="permission_message">Please,  allow storage access in order to store images</string>
+    <string name="ok">Ok</string>
 
 </resources>
