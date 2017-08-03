@@ -16,11 +16,25 @@ public interface MovieApi {
     Call<MovieResult> loadMovies(@Path("sortBy") String sortBy, @Query("language") String language, @Query("page") int page);
 
     class MovieResult {
+        @SerializedName("page")
+        private int mPage;
+
+        @SerializedName("total_pages")
+        private int mTotalPages;
+
         @SerializedName("results")
         private ArrayList<Movie> mMovies;
 
+        public int getTotalPages() {
+            return mTotalPages;
+        }
+
         public ArrayList<Movie> getMovies() {
             return mMovies;
+        }
+
+        public int getPage() {
+            return mPage;
         }
     }
 

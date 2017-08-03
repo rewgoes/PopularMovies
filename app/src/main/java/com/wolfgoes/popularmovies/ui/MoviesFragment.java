@@ -45,6 +45,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
     public static final String STATE_MOVIE_LIST = "state_movie_list";
     private static final String STATE_MOVIE_ORDER = "extra_movie_order";
+    private static final String STATE_LOAD_MORE = "state_load_more";
 
     private final int MOVIE_LOADER_ID = 1;
     private TextView mEmptyView;
@@ -91,6 +92,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         super.onSaveInstanceState(outState);
         ((MainActivity) getActivity()).saveState(STATE_MOVIE_LIST, mMovies);
         outState.putString(STATE_MOVIE_ORDER, mOrder);
+        outState.putBoolean(STATE_LOAD_MORE, mLoadMore);
     }
 
     @Override
@@ -141,6 +143,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             }
 
             mOrder = savedInstanceState.getString(STATE_MOVIE_ORDER);
+            mLoadMore = savedInstanceState.getBoolean(STATE_LOAD_MORE, true);
 
             if (TextUtils.equals(mOrder, getString(R.string.pref_order_favorites))) {
                 initLoader();
@@ -197,6 +200,8 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         mOrder = order;
 
         if (orderChanged) {
+            mLoadMore = true;
+
             synchronized (lock) {
                 mMovieAdapter.setLoaded();
                 mMovieAdapter.setFavorite(false);
@@ -309,7 +314,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             addMovie(response.body());
         } else {
             if (mMovies != null) {
-                if (mMovies.get(mMovies.size() - 1) == null){
+                if (mMovies.get(mMovies.size() - 1) == null) {
                     mMovies.remove(mMovies.size() - 1);
                     mMovieAdapter.notifyItemChanged(mMovies.size());
                 }
@@ -329,7 +334,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         }
     }
 
-    public void addMovie(MovieApi.MovieResult changesList) {
+    public void addMovie(MovieApi.MovieResult movieResult) {
         synchronized (lock) {
             if (getActivity() == null || getActivity().isDestroyed()) {
                 return;
@@ -337,16 +342,20 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
             dismissProgressDialog();
 
-            if (changesList != null) {
+            if (movieResult != null) {
+                if (movieResult.getTotalPages() == movieResult.getPage()) {
+                    mLoadMore = false;
+                }
+
                 int previousSize = mMovies == null ? 0 : mMovies.size() - 1;
-                int receivedMovies = changesList.getMovies().size();
+                int receivedMovies = movieResult.getMovies().size();
                 if (mMovies == null || mMovies.size() == 0) {
-                    mMovies = changesList.getMovies();
+                    mMovies = movieResult.getMovies();
                     mMovieAdapter.setMovies(mMovies);
                     mMovieAdapter.notifyDataSetChanged();
                 } else {
                     mMovies.remove(mMovies.size() - 1);
-                    mMovies.addAll(changesList.getMovies());
+                    mMovies.addAll(movieResult.getMovies());
                     mMovieAdapter.notifyItemRangeChanged(previousSize, receivedMovies);
                     mMovieAdapter.setLoaded();
                 }
