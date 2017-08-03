@@ -4,14 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/review_video_margin"
-    android:clickable="true"
-    android:foreground="?android:attr/selectableItemBackground"
     android:gravity="center_horizontal">
 
     <RelativeLayout
         android:layout_width="@dimen/movie_width"
         android:layout_height="wrap_content"
         android:background="@drawable/background_border"
+        android:foreground="?android:attr/selectableItemBackground"
         android:padding="@dimen/movie_item_margin">
 
         <ImageView

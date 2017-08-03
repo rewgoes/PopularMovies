@@ -103,7 +103,7 @@ class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             Uri posterPath;
             if (mFavorite) {
                 posterPath = Uri.fromFile(new File(Environment.getExternalStorageDirectory() +
-                        String.format(FILE_DIRECTORY, mContext.getApplicationContext().getPackageName(), movie.getId()) + movie.getPosterPath()));
+                        String.format(FILE_DIRECTORY, mContext.getApplicationContext().getPackageName(), movie.getId()) + "/poster.jpg"));
             } else {
                 posterPath = Uri.parse(Utility.getPosterUrlForMovie(movie.getPosterPath(), null));
             }
