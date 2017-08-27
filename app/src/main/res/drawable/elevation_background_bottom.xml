@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" >
+    <gradient
+        android:angle="90"
+        android:startColor="@color/recycler_view_background_shadow"
+        android:endColor="@color/recycler_view_background" />
+    <corners android:radius="0dp" />
+</shape>

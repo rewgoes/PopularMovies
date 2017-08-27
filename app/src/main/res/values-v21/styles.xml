@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Make the status bar traslucent -->
+    <style name="AppTheme.NoActionBar" parent="AppTheme.NoActionBar.Base">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+</resources>

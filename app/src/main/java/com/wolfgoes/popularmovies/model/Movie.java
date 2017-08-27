@@ -1,28 +1,41 @@
-package com.wolfgoes.popularmovies.data;
+package com.wolfgoes.popularmovies.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-/**
- * Created by rafael on 23/07/2016.
- */
+import com.google.gson.annotations.SerializedName;
 
-//TODO: check if Parcelable should be used
-//TODO: check if GSON should be used @Expose @SerializedName
-public class Movie implements Parcelable{
+public class Movie implements Parcelable {
 
+    @SerializedName("id")
+    private long mId;
+    @SerializedName("title")
     private String mTitle;
-    //TODO: change it to date
+    @SerializedName("release_date")
     private String mReleaseDate;
+    @SerializedName("poster_path")
     private String mPosterPath;
+    @SerializedName("backdrop_path")
+    private String mBackdropPath;
+    @SerializedName("vote_average")
     private double mVoteAverage;
+    @SerializedName("overview")
     private String mSynopsis;
 
-    public Movie () { }
+    public Movie() {
+    }
 
     @Override
     public String toString() {
         return mTitle;
+    }
+
+    public long getId() {
+        return mId;
+    }
+
+    public void setId(long id) {
+        this.mId = id;
     }
 
     public String getTitle() {
@@ -49,6 +62,14 @@ public class Movie implements Parcelable{
         this.mPosterPath = posterPath;
     }
 
+    public String getBackdropPath() {
+        return mBackdropPath;
+    }
+
+    public void setBackdropPath(String backdropPath) {
+        mBackdropPath = backdropPath;
+    }
+
     public double getVoteAverage() {
         return mVoteAverage;
     }
@@ -66,10 +87,12 @@ public class Movie implements Parcelable{
     }
 
     // Parcelling part
-    public Movie(Parcel in){
+    public Movie(Parcel in) {
+        mId = in.readLong();
         mTitle = in.readString();
         mReleaseDate = in.readString();
         mPosterPath = in.readString();
+        mBackdropPath = in.readString();
         mVoteAverage = in.readDouble();
         mSynopsis = in.readString();
     }
@@ -81,9 +104,11 @@ public class Movie implements Parcelable{
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(mId);
         dest.writeString(mTitle);
         dest.writeString(mReleaseDate);
         dest.writeString(mPosterPath);
+        dest.writeString(mBackdropPath);
         dest.writeDouble(mVoteAverage);
         dest.writeString(mSynopsis);
     }

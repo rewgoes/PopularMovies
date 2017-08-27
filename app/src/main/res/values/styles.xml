@@ -8,13 +8,22 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="AppTheme.NoActionBar" parent="AppTheme.NoActionBar.Base"/>
+
+    <style name="AppTheme.NoActionBar.Base" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
     <style name="TitleText" parent="@android:style/TextAppearance">
-        <item name="android:textColor">#424242</item>
+        <item name="android:textColor">@color/text_header_color</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="BodyText" parent="@android:style/TextAppearance">
-        <item name="android:textColor">#757575</item>
+        <item name="android:textColor">@color/text_content_color</item>
     </style>
 
 </resources>

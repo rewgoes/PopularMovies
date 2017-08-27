@@ -1,15 +1,15 @@
 package com.wolfgoes.popularmovies.ui;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.os.AsyncTask;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v7.widget.GridLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,42 +18,47 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.GridView;
-import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.wolfgoes.popularmovies.BuildConfig;
 import com.wolfgoes.popularmovies.R;
-import com.wolfgoes.popularmovies.data.Movie;
-import com.wolfgoes.popularmovies.utils.Utility;
+import com.wolfgoes.popularmovies.api.MovieApi;
+import com.wolfgoes.popularmovies.data.MoviesContract;
+import com.wolfgoes.popularmovies.listener.OnLoadMoreListener;
+import com.wolfgoes.popularmovies.model.Movie;
+import com.wolfgoes.popularmovies.network.Controller;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+
 /**
- * Fragment {@link MoviesFragment} shows all movies organized in a grid.
+ * Fragment {@link MoviesFragment} shows all mMovies organized in a grid.
  */
-public class MoviesFragment extends Fragment {
+public class MoviesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, Callback<MovieApi.MovieResult> {
 
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
+    public static final String STATE_MOVIE_LIST = "state_movie_list";
+    private static final String STATE_MOVIE_ORDER = "extra_movie_order";
+    private static final String STATE_LOAD_MORE = "state_load_more";
 
-    ArrayAdapter<Movie> mMovieAdapter;
-    String mOrder;
+    private final int MOVIE_LOADER_ID = 1;
+    private TextView mEmptyView;
+    private ProgressDialog mDialog;
+    private DynamicSpanRecyclerView mRecyclerView;
+    private ArrayList<Movie> mMovies;
+    private String mOrder;
+    private boolean mLoadMore = true;
+    private final Object lock = new Object();
+
+    MovieAdapter mMovieAdapter;
 
     @Override
-    //http://stackoverflow.com/questions/14076296/nullable-annotation-usage
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
@@ -65,19 +70,15 @@ public class MoviesFragment extends Fragment {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        fetchMovieList();
+    public void onDestroy() {
+        super.onDestroy();
+        dismissProgressDialog();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.menu_action_refresh) {
-            fetchMovieList(true);
-            return true;
-        }
         if (id == R.id.action_settings) {
             startActivity(new Intent(getContext(), SettingsActivity.class));
             return true;
@@ -87,211 +88,310 @@ public class MoviesFragment extends Fragment {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        ((MainActivity) getActivity()).saveState(STATE_MOVIE_LIST, mMovies);
+        outState.putString(STATE_MOVIE_ORDER, mOrder);
+        outState.putBoolean(STATE_LOAD_MORE, mLoadMore);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
-        mMovieAdapter = new ImageAdapter(getContext());
-        mMovieAdapter.setNotifyOnChange(false);
+        mDialog = new ProgressDialog(getContext());
+        mDialog.setCancelable(false);
 
-        GridView gridView = (GridView) rootView.findViewById(R.id.movies_grid);
-        gridView.setAdapter(mMovieAdapter);
-        gridView.setEmptyView(rootView.findViewById(R.id.empty_list_view));
+        mRecyclerView = (DynamicSpanRecyclerView) rootView.findViewById(R.id.movies_grid);
 
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mMovieAdapter = new MovieAdapter(getContext(), new ArrayList<Movie>());
+        mEmptyView = (TextView) rootView.findViewById(R.id.empty_list_view);
+
+        final GridLayoutManager gridLayoutManager = (GridLayoutManager) mRecyclerView.getLayoutManager();
+
+        gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Intent intent = new Intent(getContext(), DetailActivity.class)
-                        .putExtra("movie", mMovieAdapter.getItem(position));
-                startActivity(intent);
+            public int getSpanSize(int position) {
+                int spanCount = gridLayoutManager.getSpanCount();
+                switch (mMovieAdapter.getItemViewType(position)) {
+                    case MovieAdapter.VIEW_TYPE_LOADING:
+                        return spanCount;
+                    default:
+                        return 1;
+                }
             }
         });
+
+        mRecyclerView.setAdapter(mMovieAdapter);
 
         return rootView;
     }
 
-    private void fetchMovieList() {
-        fetchMovieList(false);
-    }
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-    private void fetchMovieList(boolean forceUpdate) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        String order = prefs.getString(getString(R.string.pref_order_key), getString(R.string.pref_order_popular));
+        if (savedInstanceState != null) {
+            mMovies = ((MainActivity) getActivity()).getState(STATE_MOVIE_LIST);
 
-        if (TextUtils.isEmpty(mOrder) || !mOrder.equals(order) || forceUpdate) {
-            mOrder = order;
-            FetchMovieList moviesTask = new FetchMovieList();
-            moviesTask.execute();
-        }
-    }
-
-    private class ImageAdapter extends ArrayAdapter<Movie> {
-        private Context mContext;
-        private LayoutInflater inflater;
-
-        public ImageAdapter(Context context) {
-            super(context, R.layout.movie_item, R.id.movies_grid);
-
-            mContext = context;
-            inflater = LayoutInflater.from(mContext);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = inflater.inflate(R.layout.movie_item, parent, false);
-            }
-
-            ImageView poster = (ImageView) convertView.findViewById(R.id.poster);
-
-            Glide.with(mContext)
-                    .load(Utility.getPosterUrlForMovie(getItem(position).getPosterPath()))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                    .into(poster);
-
-            return convertView;
-        }
-    }
-
-    private class FetchMovieList extends AsyncTask<Void, Void, Movie[]> {
-
-        private final String LOG_TAG = FetchMovieList.class.getSimpleName();
-        private ProgressDialog mDialog;
-
-        public FetchMovieList() {
-            mDialog = new ProgressDialog(getContext());
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            if (mDialog != null) {
-                mDialog.setMessage(getString(R.string.loading_movies));
-                mDialog.show();
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Movie[] movies) {
-            if (mDialog != null && mDialog.isShowing())
-                mDialog.dismiss();
-
-            if (movies == null)
-                Log.d(LOG_TAG, "Error: no movies were fetched");
-            else {
-                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "Number of movies fetched: " + movies.length);
-                mMovieAdapter.clear();
-                for (Movie movie : movies) {
-                    mMovieAdapter.add(movie);
+            synchronized (lock) {
+                if (mMovies != null && mMovies.size() > 0 && mMovies.get(mMovies.size() - 1) == null) {
+                    mMovies.remove(mMovies.size() - 1);
                 }
+            }
+
+            mOrder = savedInstanceState.getString(STATE_MOVIE_ORDER);
+            mLoadMore = savedInstanceState.getBoolean(STATE_LOAD_MORE, true);
+
+            if (TextUtils.equals(mOrder, getString(R.string.pref_order_favorites))) {
+                initLoader();
+            } else {
+                if (!TextUtils.isEmpty(mOrder)) {
+                    //set load more listener for the RecyclerView adapter
+                    mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+                        @Override
+                        public void onLoadMore() {
+                            synchronized (lock) {
+                                if (mLoadMore) {
+                                    if (mMovies != null) {
+                                        mRecyclerView.post(new Runnable() {
+                                            public void run() {
+                                                mMovies.add(null);
+                                                mMovieAdapter.notifyItemInserted(mMovies.size());
+
+                                                int page = (mMovies.size() / 20) + 1;
+                                                fetchMovieList(mOrder, page);
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    Toast.makeText(getContext(), R.string.no_more_movies, Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }
+                    }, mRecyclerView);
+                }
+            }
+
+            if (mMovies != null) {
+                mMovieAdapter.setMovies(mMovies);
+            }
+        }
+    }
+
+    public void initLoader() {
+        mMovieAdapter.setOnLoadMoreListener(null, mRecyclerView);
+
+        if (getLoaderManager().getLoader(MOVIE_LOADER_ID) == null) {
+            getLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+        }
+
+        mEmptyView.setText(getString(R.string.empty_favorite_list_view));
+    }
+
+
+    public void fetchMovieList(String order, int page) {
+        fetchMovieList(order, page, false);
+    }
+
+    public void fetchMovieList(String order, int page, boolean orderChanged) {
+        mOrder = order;
+
+        if (orderChanged) {
+            mLoadMore = true;
+
+            synchronized (lock) {
+                mMovieAdapter.setLoaded();
+                mMovieAdapter.setFavorite(false);
+                mMovies = new ArrayList<>();
+
+                mMovieAdapter.setMovies(mMovies);
                 mMovieAdapter.notifyDataSetChanged();
             }
+
+            //set load more listener for the RecyclerView adapter
+            mMovieAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+                @Override
+                public void onLoadMore() {
+                    synchronized (lock) {
+                        if (mLoadMore) {
+                            if (mMovies != null && mMovies.size() > 0) {
+                                mRecyclerView.post(new Runnable() {
+                                    public void run() {
+                                        mMovies.add(null);
+                                        mMovieAdapter.notifyItemInserted(mMovies.size());
+
+                                        int page = (mMovies.size() / 20) + 1;
+                                        fetchMovieList(mOrder, page);
+                                    }
+                                });
+                            }
+                        } else {
+                            Toast.makeText(getContext(), getString(R.string.no_more_movies), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            }, mRecyclerView);
         }
 
-        @Override
-        protected Movie[] doInBackground(Void... voids) {
+        getLoaderManager().destroyLoader(MOVIE_LOADER_ID);
 
-            //TODO: check if retrofit should be used to fetch data
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
+        Controller controller = new Controller();
+        Retrofit retrofit = controller.getRetrofit();
 
-            String moviesJsonStr;
+        MovieApi movieApi = retrofit.create(MovieApi.class);
 
-            Movie[] movies = null;
+        Call<MovieApi.MovieResult> call = movieApi.loadMovies(order, Locale.getDefault().getLanguage(), page);
+        call.enqueue(this);
 
-            final String MOVIES_BASE_URL = "http://api.themoviedb.org/3/movie/";
-            final String API_ID = "api_key";
-            final String LANGUAGE = "language";
-            final String POSTER_LANGUAGE = "include_image_language";
+        if (mDialog != null && page == 1) {
+            mDialog.setMessage(getString(R.string.loading_movies));
+            mDialog.show();
+        }
+        mEmptyView.setText(getString(R.string.empty_list_view));
+    }
 
-            String language = Locale.getDefault().getLanguage();
-            Log.d(LOG_TAG, "Language defined to: " + language);
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if (id == MOVIE_LOADER_ID) {
+            return new CursorLoader(getContext(),
+                    MoviesContract.MovieEntry.CONTENT_URI,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+        return null;
+    }
 
-            Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
-                    .appendPath(mOrder)
-                    .appendQueryParameter(API_ID, BuildConfig.THE_MOVIE_DB_API_KEY)
-                    .appendQueryParameter(LANGUAGE, language)
-                    .appendQueryParameter(POSTER_LANGUAGE, language + ",en")
-                    .build();
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        mMovieAdapter.setFavorite(true);
+        mMovies = new ArrayList<>();
 
-            if (BuildConfig.DEBUG) Log.d(LOG_TAG, builtUri.toString());
+        if (data != null) {
+            while (data.moveToNext()) {
+                Movie movie = new Movie();
 
-            try {
-                URL url = new URL(builtUri.toString()); //might cause MalformedURLException
+                movie.setId(data.getLong(data.getColumnIndex(MoviesContract.MovieEntry._ID)));
+                movie.setTitle(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_TITLE)));
+                movie.setSynopsis(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_SYNOPSIS)));
+                movie.setPosterPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_POSTER_URL)));
+                movie.setBackdropPath(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_BACKDROP_URL)));
+                movie.setReleaseDate(data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RELEASE)).substring(0, 4));
+                movie.setVoteAverage(data.getDouble(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_RATING)));
+                mMovies.add(movie);
+            }
+        }
 
-                urlConnection = (HttpURLConnection) url.openConnection(); //IOException
-                urlConnection.setRequestMethod("GET"); //ProtocolException
-                urlConnection.connect(); //IOException
+        mMovieAdapter.setMovies(mMovies);
+        mMovieAdapter.notifyDataSetChanged();
 
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
+        if (mMovieAdapter.getItemCount() > 0) {
+            showRecyclerView(true);
+        } else {
+            showRecyclerView(false);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        //do nothing
+    }
+
+    private void dismissProgressDialog() {
+        if (mDialog != null && mDialog.isShowing()) {
+            mDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void onResponse(Call<MovieApi.MovieResult> call, Response<MovieApi.MovieResult> response) {
+        if (response.isSuccessful()) {
+            addMovie(response.body());
+        } else {
+            if (mMovies != null) {
+                if (mMovies.get(mMovies.size() - 1) == null) {
+                    mMovies.remove(mMovies.size() - 1);
+                    mMovieAdapter.notifyItemChanged(mMovies.size());
                 }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
+                Toast.makeText(getContext(), getString(R.string.no_more_movies), Toast.LENGTH_SHORT).show();
+            } else {
+                Log.e(LOG_TAG, "onResponse failed!");
+                showRecyclerView(false);
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line);
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                moviesJsonStr = buffer.toString();
-
-                movies = getMovieDataFromJson(moviesJsonStr);
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, "Failed to parse Data: ", e);
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
+                if (response.errorBody() != null) {
                     try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
+                        Log.e(LOG_TAG, response.errorBody().string());
+                    } catch (IOException | NullPointerException e) {
+                        //do nothing
                     }
                 }
             }
-
-            return movies;
         }
+    }
 
-        private Movie[] getMovieDataFromJson(String moviesJsonStr) throws JSONException {
-            final String JKEY_RESULTS = "results";
-            // TODO: check if original_title or title should be fetched
-            // original_title shows Japanese characters
-            final String JKEY_TITLE = "title";
-            final String JKEY_DATE = "release_date";
-            final String JKEY_POSTER = "poster_path";
-            final String JKEY_SYNOPSIS = "overview";
-            final String JKEY_VOTE = "vote_average";
-
-            JSONObject moviesJson = new JSONObject(moviesJsonStr);
-            JSONArray moviesArray = moviesJson.getJSONArray(JKEY_RESULTS);
-
-            int numMovies = moviesArray.length();
-            Movie[] movies = new Movie[numMovies];
-
-            for (int i = 0; i < moviesArray.length(); i++) {
-                JSONObject movie = moviesArray.getJSONObject(i);
-                movies[i] = new Movie();
-
-                movies[i].setTitle(movie.getString(JKEY_TITLE));
-                movies[i].setSynopsis(movie.getString(JKEY_SYNOPSIS));
-                movies[i].setPosterPath(movie.getString(JKEY_POSTER));
-                movies[i].setReleaseDate(movie.getString(JKEY_DATE).substring(0, 4));
-                movies[i].setVoteAverage(movie.getDouble(JKEY_VOTE));
+    public void addMovie(MovieApi.MovieResult movieResult) {
+        synchronized (lock) {
+            if (getActivity() == null || getActivity().isDestroyed()) {
+                return;
             }
 
-            return movies;
+            dismissProgressDialog();
+
+            if (movieResult != null) {
+                if (movieResult.getTotalPages() == movieResult.getPage()) {
+                    mLoadMore = false;
+                }
+
+                int previousSize = mMovies == null ? 0 : mMovies.size() - 1;
+                int receivedMovies = movieResult.getMovies().size();
+                if (mMovies == null || mMovies.size() == 0) {
+                    mMovies = movieResult.getMovies();
+                    mMovieAdapter.setMovies(mMovies);
+                    mMovieAdapter.notifyDataSetChanged();
+                } else {
+                    mMovies.remove(mMovies.size() - 1);
+                    mMovies.addAll(movieResult.getMovies());
+                    mMovieAdapter.notifyItemRangeChanged(previousSize, receivedMovies);
+                    mMovieAdapter.setLoaded();
+                }
+            }
         }
+
+        if (mMovieAdapter.getItemCount() > 0) {
+            showRecyclerView(true);
+        } else {
+            showRecyclerView(false);
+        }
+    }
+
+    @Override
+    public void onFailure(Call<MovieApi.MovieResult> call, Throwable t) {
+        Log.e(LOG_TAG, "onFailure " + t.toString());
+
+        if (getActivity() == null || getActivity().isDestroyed()) {
+            return;
+        }
+
+        dismissProgressDialog();
+
+        if (mMovies != null && mMovies.size() > 0) {
+            if (mMovies.get(mMovies.size() - 1) == null) {
+                mMovies.remove(mMovies.size() - 1);
+                mMovieAdapter.notifyItemChanged(mMovies.size());
+            }
+            Toast.makeText(getContext(), getString(R.string.no_more_movies), Toast.LENGTH_SHORT).show();
+        } else {
+            showRecyclerView(false);
+        }
+    }
+
+    private void showRecyclerView(boolean show) {
+        mRecyclerView.setVisibility(show ? View.VISIBLE : View.GONE);
+        mEmptyView.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 }

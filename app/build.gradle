@@ -14,6 +14,8 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
         release {
@@ -29,12 +31,21 @@ android {
     }
 }
 
-//TODO: https://inthecheesefactory.com/blog/get-to-know-glide-recommended-by-google/en
-//TODO: Set glide to ARGB_8888
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:palette-v7:25.3.1'
     compile 'com.github.bumptech.glide:glide:3.8.0'
+    compile 'net.opacapp:multiline-collapsingtoolbar:1.4.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.3.0'
+    compile 'com.squareup.retrofit2:retrofit:2.3.0'
+    compile 'com.android.support:cardview-v7:25.3.1'
+    compile 'com.atlassian.commonmark:commonmark:0.9.0'
+
+    androidTestCompile 'junit:junit:4.12'
+    androidTestCompile 'com.android.support:support-annotations:25.3.1'
+    androidTestCompile 'com.android.support.test:runner:0.5'
+    androidTestCompile 'com.android.support.test:rules:0.5'
 }

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginEnd="@dimen/review_video_margin"
+    android:layout_marginStart="@dimen/review_video_margin"
+    app:cardCornerRadius="5dp"
+    app:cardElevation="5dp"
+    app:cardUseCompatPadding="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/review_author"
+            style="@style/TitleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Rafael"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginBottom="6dp"
+            android:layout_marginTop="6dp"
+            android:background="@color/text_content_color"/>
+
+        <android.support.v4.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/review_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="As long as the kids stay in the picture -- thankfully, that's most of the movie -- Spider-Man: Homecoming is the fun playdate most of us have been looking forward to since the character stole Cap's shield last spring in Captain America: Civil War. As long as the kids stay in the picture -- thankfully, that's most of the movie -- Spider-Man: Homecoming is the fun playdate most of us have been looking forward to since the character stole Cap's shield last spring in Captain America: Civil War."/>
+
+        </android.support.v4.widget.NestedScrollView>
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>

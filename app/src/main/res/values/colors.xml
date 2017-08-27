@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimary">#607D8B</color>
+    <color name="colorPrimaryDark">#37474F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="translucent">#CCFF0000</color>
+    <color name="favorite_background">#FFFFFF</color>
+    <color name="recycler_view_background">#EEEEEE</color>
+    <color name="recycler_view_background_shadow">#DEDEDE</color>
+    <color name="favorite_red">@color/translucent</color>
+    <color name="text_content_color">#757575</color>
+    <color name="text_header_color">#424242</color>
 </resources>

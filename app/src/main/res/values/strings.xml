@@ -13,8 +13,10 @@
 
     <string name="pref_order_label_top_rated">Top rated</string>
     <string name="pref_order_label_popular">Popular</string>
+    <string name="pref_order_label_favorites">Favorites</string>
     <string name="pref_order_popular" translatable="false">popular</string>
     <string name="pref_order_top_rated" translatable="false">top_rated</string>
+    <string name="pref_order_favorites" translatable="false">favorites</string>
     <string name="pref_order_label">Movies order</string>
     <string name="pref_order_key" translatable="false">order</string>
     <string name="release_year_not_available">Sorry, release year not available.</string>
@@ -28,5 +30,15 @@
     <string name="rating">Rating</string>
     <string name="loading_movies">Loading movies</string>
     <string name="empty_list_view">A problem happened while loading the movies</string>
+    <string name="empty_favorite_list_view">Favorite list is empty</string>
+    <string name="menu_action_favorite">Favorite</string>
+    <string name="reviews">Reviews</string>
+    <string name="videos">Videos</string>
+    <string name="no_review_available">No review available</string>
+    <string name="no_video_available">No video available</string>
+    <string name="no_more_movies">No more movies</string>
+    <string name="permission">Permission</string>
+    <string name="permission_message">Please,  allow storage access in order to store images</string>
+    <string name="ok">Ok</string>
 
 </resources>
