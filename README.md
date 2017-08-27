@@ -12,13 +12,9 @@ Another alternative is to edit <b>THE_MOVIE_DB_API_KEY</b> value in PopularMovie
 * Infinite scroll
 
 # Screenshots
-![screen](../master/readme_images/1.png)
+![screen](../master/readme_images/1.png) ![screen](../master/readme_images/2.png)
 
-![screen](../master/readme_images/2.png)
-
-![screen](../master/readme_images/3.png)
-
-![screen](../master/readme_images/4.png)
+![screen](../master/readme_images/3.png) ![screen](../master/readme_images/4.png)
 
 # Libraries
 * [Retrofit](https://github.com/square/retrofit)
